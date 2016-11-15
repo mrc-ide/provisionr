@@ -1,2 +1,2 @@
-options(repos = "https://cran.r-studio.com")
+options(repos = "https://cran.rstudio.com")
 Sys.setenv(R_TESTS="")
