@@ -34,3 +34,7 @@ call_system <- function(command, args, env=character(), max_lines=20,
   }
   invisible(res)
 }
+
+call_r <- function(...) {
+  call_system(file.path(R.home("bin"), "R"), ...)
+}

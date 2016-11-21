@@ -1,6 +1,6 @@
 cross_install_packages <- function(packages, lib, platform,
                                    ..., repos = NULL, r_version = NULL,
-                                   error = TRUE, upgrade = TRUE) {
+                                   error = TRUE, upgrade = FALSE) {
   if (lib %in% .libPaths()) {
     stop("Do not use cross_install_packages to install into current library")
   }
@@ -27,7 +27,7 @@ cross_install_packages <- function(packages, lib, platform,
   ##   upgrade = TRUE: check all package versions that can be increased
   ##   upgrade = FALSE: don't do so, but let's check to see if all prereqs
   ##                    are here.
-  ##   upgrade = NA: skip any checking and just do missing?  Or could do
+  ##   upgrade = NA/NULL: skip any checking and just do missing?  Or could do
   ##                 with missing_only argument perhaps?
 
   plan <- cross_install_plan(packages, db, lib)
