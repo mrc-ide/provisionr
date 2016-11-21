@@ -70,17 +70,23 @@ drat_build <- function(specs, path, verbose = TRUE) {
   drat_repo_init(path)
   desc <- list()
 
+  st <- storr::storr_rds(path_drat_storr(path), mangle_key = TRUE)
+
   while (length(specs) > 0L) {
     for (x in lapply(specs, parse_remote)) {
       provisionr_log("drat", x$spec)
       pkg <- build_package(x, verbose)
-      desc[[x$spec]] <- extract_DESCRIPTION(pkg)
+      d <- as.list(extract_DESCRIPTION(pkg)[1L, ])
+      d$package <- pkg
+      d$md5 <- unname(tools::md5sum(pkg))
       drat::insertPackage(pkg, path, commit = FALSE)
+      desc[[x$spec]] <- d
+      st$set(x$spec, d)
     }
 
     ## Then comes a fairly ugly bit of collecting up all the extra bits:
     extra <- lapply(desc, function(x)
-      if ("Remotes" %in% colnames(x)) parse_remotes(x[, "Remotes"]) else NULL)
+      if ("Remotes" %in% names(x)) parse_remotes(x[["Remotes"]]) else NULL)
 
     specs <- unique(setdiff(unlist(extra, TRUE, FALSE), names(desc)))
   }
@@ -208,4 +214,8 @@ extract_DESCRIPTION <- function(filename) {
     untar(filename, file, exdir = dest)
   }
   read.dcf(file.path(dest, file))
+}
+
+path_drat_storr <- function(path_drat) {
+  file.path(path_drat, "storr")
 }

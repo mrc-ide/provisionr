@@ -37,7 +37,7 @@ test_that("build drat", {
 
   expect_is(ans, "list")
   expect_true(specs %in% names(ans))
-  expect_equal(unname(ans[[specs]][, "Package"]), "odin")
+  expect_equal(unname(ans[[specs]][["Package"]]), "odin")
 
   expect_true(
     length(dir(file.path(path, "src", "contrib"), "odin_.*\\.tar\\.gz$")) > 0)

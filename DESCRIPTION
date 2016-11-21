@@ -10,7 +10,8 @@ Depends:
 License: MIT + file LICENSE
 Imports:
     drat,
-    remotes
+    remotes,
+    storr
 Suggests:
     testthat
 RoxygenNote: 5.0.1
