@@ -15,10 +15,11 @@ test_that("github", {
 
 test_that("build", {
   src <- package_sources(github = "richfitz/kitten")
-  ret <- src$build(tempfile())
+  tmp <- tempfile()
+  ret <- src$build(tmp)
   expect_is(ret, "local_drat")
-  expect_true(file.exists(ret$path))
-  path <- file.path(ret$path, "src", "contrib")
+  expect_true(file.exists(tmp))
+  path <- file.path(tmp, "src", "contrib")
   expect_true(file.exists(file.path(path, "PACKAGES")))
   pkgs <- read.dcf(file.path(path, "PACKAGES"))
   expect_equal(unname(pkgs[, "Package"]), "kitten")
@@ -30,4 +31,6 @@ test_that("build", {
   expect_true(file.exists(tgz))
   expect_equal(unname(tools::md5sum(tgz)), dat$md5)
   expect_equal(dat$Package, "kitten")
+
+  expect_equal(ret$repos, tmp)
 })

@@ -7,6 +7,7 @@ cross_install_packages <- function(packages, lib, platform,
   if (lib %in% .libPaths()) {
     stop("Do not use cross_install_packages to install into current library")
   }
+  dir.create(lib, FALSE, TRUE)
 
   version <- check_r_version(version)
 
@@ -89,12 +90,23 @@ lib_package_version <- function(package, lib) {
 ## TODO: memoise this because it's quite slow
 available_packages <- function(repos, platform, version) {
   provisionr_log("download", "package database")
+
+  is_local <- grepl("^(/|file://)", repos)
+  if (any(is_local)) {
+    i <- file.exists(repos)
+    repos[i] <- file_url(repos[i])
+  }
+
   pkgs_src <- available.packages(contrib_url(repos, "src", NULL))
   if (platform == "linux") {
     pkgs_bin <- pkgs_src[integer(0), ]
   } else {
     version_str <- paste(version[1:2], collapse = ".")
-    pkgs_bin <- available.packages(contrib_url(repos, platform, version_str))
+    repos_bin <- contrib_url(repos, platform, version_str)
+    if (any(is_local)) {
+      lapply(file_unurl(repos_bin[is_local]), drat_add_empty_bin)
+    }
+    pkgs_bin <- available.packages(repos_bin)
   }
   extra <- setdiff(rownames(pkgs_bin), rownames(pkgs_src))
   if (length(extra) > 0L) {
@@ -222,11 +234,16 @@ cross_install_package <- function(package, db, lib, binary, platform) {
     args <- c("CMD", "INSTALL", "--no-test-load",
               paste0("--library=", shQuote(normalizePath(lib, "/"))),
               shQuote(normalizePath(path)))
-    ok <- system2(file.path(R.home(), "bin", "R"), args, env = env)
-    if (ok != 0L) {
-      stop(sprintf("Command failed (code: %d)", ok))
-    }
+    call_system(file.path(R.home(), "bin", "R"), args, env = env)
   }
 
   invisible(TRUE)
+}
+
+drat_add_empty_bin <- function(path) {
+  path_PACKAGES <- file.path(path, "PACKAGES")
+  if (!file.exists(path_PACKAGES)) {
+    dir.create(path, FALSE, TRUE)
+    writeLines(character(0), path_PACKAGES)
+  }
 }

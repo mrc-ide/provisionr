@@ -4,6 +4,7 @@ install_packages <- function(packages, lib = NULL, ...,
     return()
   }
   lib <- default_lib(lib)
+  dir.create(lib, FALSE, TRUE)
   install_packages2(packages, lib, ..., error = error)
 }
 

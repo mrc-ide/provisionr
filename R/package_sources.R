@@ -34,26 +34,23 @@ package_sources <- function(cran = NULL, repos = NULL,
     spec <- c(spec, paste0("local::", local))
   }
 
-  build <- function(path) {
-    local_drat(spec, path)$build()
-  }
-  ret <- list(cran = cran, repos = repos, spec = spec, build = build)
-  class(ret) <- "package_sources"
-  ret
+  self <- list(cran = cran, repos = repos, spec = spec)
+  self$build <- function(path) local_drat(self, path)$build()
+  class(self) <- "package_sources"
+  self
 }
 
-local_drat <- function(spec, path) {
+local_drat <- function(src, path) {
   ## This should keep track of when it was last built, what is in it,
   ## etc.
-  force(spec)
-  force(path)
-  self <- list(spec = spec,
-               path = path)
+  self <- list(cran = src$cran,
+               repos = c(src$repos, path),
+               path = path,
+               db = drat_storr(path))
   self$build <- function() {
-    drat_build(spec, path)
+    drat_build(src$spec, path)
     self
   }
-  self$db <- drat_storr(path)
   class(self) <- "local_drat"
   self
 }

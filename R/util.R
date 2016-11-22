@@ -35,3 +35,19 @@ vlapply <- function(X, FUN, ...) {
 vcapply <- function(X, FUN, ...) {
   vapply(X, FUN, character(1), ...)
 }
+
+## Convert a path to a file:// that R can understand.  Some care is
+## needed on windows.  This will create a path with *three* leading
+## slashes.
+file_url <- function(path) {
+  full_path <- normalizePath(path, winslash = "/")
+  paste0("file://", if (substr(full_path, 1, 1) == "/") "" else "/", full_path)
+}
+
+file_unurl <- function(url) {
+  if (is_windows()) {
+    sub("^file:///", "", url)
+  } else {
+    sub("^file://", "", url)
+  }
+}

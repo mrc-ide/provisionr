@@ -49,3 +49,14 @@ test_that("binary cross install with deps", {
   q4 <- cross_install_plan("httr", db, lib, "replace")
   expect_equal(q4, p4)
 })
+
+test_that("cross install source package", {
+  lib <- tempfile()
+
+  ## This is never going on CRAN and has no nasty dependencies:
+  src <- package_sources(github = "richfitz/kitten")
+  path_drat <- tempfile()
+  drat <- src$build(path_drat)
+  provision_library("kitten", lib, platform = "windows", src = drat)
+  expect_equal(dir(lib), "kitten")
+})

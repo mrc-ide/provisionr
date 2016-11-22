@@ -7,8 +7,9 @@
 provision_library <- function(packages, lib, upgrade = FALSE, src = NULL,
                               platform = NULL, version = NULL,
                               path_drat = stop("please provide"),
-                              verbose = TRUE, check = TRUE,
+                              check = TRUE,
                               installed_action = "replace") {
+  dir.create(lib, FALSE, TRUE)
   ## Options for installed_action will be:
   ##
   ## * skip: filter out and skip over installed packages
@@ -30,11 +31,9 @@ provision_library <- function(packages, lib, upgrade = FALSE, src = NULL,
 
   if (!is.null(src)) {
     if (inherits(src, "package_sources")) {
-      src <- src$build()
+      src <- src$build(path_drat)
     }
-    if (inherits(src, "local_drat")) {
-      repos <- c(src$repos, normalizePath(src$path))
-    } else {
+    if (!inherits(src, "local_drat")) {
       stop("Invalid input for src")
     }
   }

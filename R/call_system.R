@@ -1,8 +1,8 @@
 ## This is directly from callr; once that's on CRAN I'll set up a
 ## direct dependency I think.
 ##' @importFrom utils head tail
-call_system <- function(command, args, env=character(), max_lines=20,
-                        p=0.8) {
+call_system <- function(command, args, env = character(), max_lines = 20,
+                        p = 0.8) {
   res <- suppressWarnings(system2(command, args,
                                   env=env, stdout=TRUE, stderr=TRUE))
   ok <- attr(res, "status")
