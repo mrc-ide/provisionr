@@ -1,6 +1,8 @@
 ## NOTE: this basically reproduces the drat.builder package; consider
-## moving it into there?
+## moving it into there, or depending on this package from that one.
 
+## TODO: Now that timestamps are installed, let's enable refresh of
+## packages that are too old.
 
 ## From each remote I need to get the url of the description and
 ## organise the name of the function to do the installation with.
@@ -66,19 +68,24 @@ parse_remotes <- function(str) {
   lapply(strsplit(str, "\\s*,\\s*")[[1]], f)
 }
 
+drat_storr <- function(path) {
+  storr::storr_rds(path_drat_storr(path), mangle_key = TRUE)
+}
+
 drat_build <- function(specs, path) {
   drat_repo_init(path)
   desc <- list()
 
-  st <- storr::storr_rds(path_drat_storr(path), mangle_key = TRUE)
+  st <- drat_storr(path)
 
   while (length(specs) > 0L) {
     for (x in lapply(specs, parse_remote)) {
       provisionr_log("drat", x$spec)
       pkg <- drat_build_package(x)
       d <- as.list(extract_DESCRIPTION(pkg)[1L, ])
-      d$package <- pkg
+      d$tgz <- basename(pkg)
       d$md5 <- unname(tools::md5sum(pkg))
+      d$timestamp <- Sys.time()
       drat::insertPackage(pkg, path, commit = FALSE)
       desc[[x$spec]] <- d
       ## TODO: I think that I need to put the dependent repos in here

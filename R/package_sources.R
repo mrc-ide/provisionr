@@ -16,11 +16,11 @@ package_sources <- function(cran = NULL, repos = NULL,
 
   ## Collect all the spec information here into a single vector, I
   ## think; that'll be easier to modify.
-  spec <- character(0)
+  spec <- NULL
 
   if (!is.null(github)) {
     tmp <- lapply(github, parse_remote)
-    err <- vlapply(tmp, "[[", type) != "github"
+    err <- vcapply(tmp, "[[", "type") != "github"
     if (any(err)) {
       stop("Non-github spec ", paste(github[err], collpse = ", "))
     }
@@ -34,8 +34,8 @@ package_sources <- function(cran = NULL, repos = NULL,
     spec <- c(spec, paste0("local::", local))
   }
 
-  build <- function(path, verbose = TRUE) {
-    local_drat(spec, path)$build(verbose)
+  build <- function(path) {
+    local_drat(spec, path)$build()
   }
   ret <- list(cran = cran, repos = repos, spec = spec, build = build)
   class(ret) <- "package_sources"
@@ -49,10 +49,11 @@ local_drat <- function(spec, path) {
   force(path)
   self <- list(spec = spec,
                path = path)
-  self$build <- function(verbose = TRUE) {
-    drat_build(spec, path, verbose)
+  self$build <- function() {
+    drat_build(spec, path)
     self
   }
-  class(ret) <- "local_drat"
-  ret
+  self$db <- drat_storr(path)
+  class(self) <- "local_drat"
+  self
 }
