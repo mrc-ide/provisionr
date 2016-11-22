@@ -13,8 +13,7 @@ cross_install_packages <- function(packages, lib, platform,
 
   ## NOTE: Getting linux support in properly requires an abstracted
   ## interface to something like buildr or rhub
-  platform <- match.arg(platform,
-                        c("windows", "macosx", "macosx/mavericks", "linux"))
+  platform <- match.arg(platform, valid_platforms())
 
   ## Hmm, perhaps remove this block:
   if (is.null(repos)) {
@@ -246,4 +245,8 @@ drat_add_empty_bin <- function(path) {
     dir.create(path, FALSE, TRUE)
     writeLines(character(0), path_PACKAGES)
   }
+}
+
+valid_platforms <- function() {
+  c("windows", "macosx", "macosx/mavericks", "linux")
 }

@@ -4,11 +4,66 @@
 ##
 ## One issue is if install.packages will add all dependencies when
 ## things are a bit incomplete.
-provision_library <- function(packages, lib, upgrade = FALSE, src = NULL,
+
+
+##' Create or update a library of packages.
+##'
+##' Cross installation of binary files is difficult and I need to come
+##' up with a way of making that work nicely.
+##'
+##' @title Create or update a library
+##' @param packages A character vector of packages to include
+##'
+##' @param lib A path to the library; if it does not exist, it will be
+##'   created.
+##'
+##' @param platform The platform to create the library for.  If
+##'   \code{NULL} then we build for the current platform (using
+##'   \code{\link{install_packages}} if \code{version} is \code{NULL}
+##'   or compatible with our current version).  Otherwise this can be
+##'   one of \code{"windows"}, \code{"macosx"},
+##'   \code{"macosx/mavericks"} or \code{"linux"}, correspinding to
+##'   the different directories that binaries live in (in the case of
+##'   \code{"linux"} there are no binaries and things are a little
+##'   more complicated).
+##'
+##' @param version The version of R to install packages for.  By
+##'   default, we use the same version (major.minor) as the current
+##'   running R version.  Otherwise provide the desired version number
+##'   as a string or \code{numeric_version} object.
+##'
+##' @param src An optional description of additional packages, using
+##'   \code{\link{package_sources}} (can be either a
+##'   \code{package_sources} object or a \code{local_drat} object).
+##'
+##' @param path_drat When using a \code{package_sources} object for
+##'   \code{src}, the path to store the drat repository.  If not
+##'   given, then a temporary directory will be used.
+##'
+##' @param check_dependencies Logical, indicating if dependencies of
+##'   \code{packges} should be checked.  If \code{TRUE}, then any
+##'   missing dependencies (packages in Depends, Imports or LinkingTo
+##'   of the requested packages) will be installed.
+##'
+##' @param installed_action The behaviour when some packages are
+##'   already installed.  Options are \code{"replace"} (will
+##'   re-install the package and, for cross-installation, its
+##'   dependencies), \code{"upgrade_all"} (upgrade all packages that
+##'   lag behind the versions in repositories), \code{"upgrade"}
+##'   (upgrade packages listed in \code{"packages"} only, but not
+##'   their dependencies) and \code{"skip"} (do not install or upgrade
+##'   any package that is already installed).
+##'
+##' @export
+##' @author Rich FitzJohn
+provision_library <- function(packages, lib,
                               platform = NULL, version = NULL,
-                              path_drat = stop("please provide"),
-                              check = TRUE,
+                              src = NULL, path_drat = NULL,
+                              check_dependencies = TRUE,
                               installed_action = "replace") {
+  assert_scalar_character(lib)
+  assert_scalar_logical(check_dependencies)
+
   dir.create(lib, FALSE, TRUE)
   ## Options for installed_action will be:
   ##
@@ -17,28 +72,34 @@ provision_library <- function(packages, lib, upgrade = FALSE, src = NULL,
   ## * upgrade_all: as for upgrade, but also for packages that are
   ##   not *directly* required.
   ## * replace: reinstall packages
-  installed_action <- match.arg(installed_action,
-                                c("replace", "upgrade_all", "upgrade", "skip"))
+  installed_action <-
+    match_value(installed_action,
+                c("replace", "upgrade_all", "upgrade", "skip"))
 
   ## TODO: this could be broadened out to detect our current platform
   ## and version as a self install
   self <- is.null(platform) && is.null(version)
 
-  if (check) {
-    dat <- check_library(packages, lib)
-    packages <- union(packages, dat$missing)
-  }
-
   if (!is.null(src)) {
     if (inherits(src, "package_sources")) {
+      if (is.null(path_drat)) {
+        path_drat <- tempfile()
+        on.exit(unlink(path_drat, recursive = TRUE))
+      } else {
+        assert_scalar_character(path_drat)
+      }
       src <- src$build(path_drat)
     }
     if (!inherits(src, "local_drat")) {
       stop("Invalid input for src")
     }
   }
-
   repos <- c(src$cran, src$repos)
+
+  if (check_dependencies) {
+    dat <- check_library(packages, lib)
+    packages <- union(packages, dat$missing)
+  }
 
   ## The upgrade thing here is very difficult; if someone removes a
   ## dependency, it's pretty difficult to check this.  But we *can*

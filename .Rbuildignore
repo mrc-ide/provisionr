@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 ^ignore$
 ^Makefile$
+^TODO\.md$
+^notes\.md$
