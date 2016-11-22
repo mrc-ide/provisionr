@@ -2,3 +2,4 @@
 .Rhistory
 .RData
 TODO.md
+tests/testthat/clone_cran.R

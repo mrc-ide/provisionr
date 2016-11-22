@@ -1,11 +1,19 @@
 install_packages <- function(packages, lib = NULL, ...,
+                             installed_action = "skip",
                              error = TRUE) {
+  ## TODO: At the moment, this is going to ignore the installed_action
+  ## bit and we'll pick that up by refactoring the plan bits from
+  ## cross_install.  This will have the (big) advantage of memoising
+  ## the calls to available.packages
+  ##
+  ## TODO: at the moment, this produces a lot more noise than the
+  ## cross_install so I've set it to quiet = TRUE for now.
   if (length(packages) == 0L) {
     return()
   }
   lib <- default_lib(lib)
   dir.create(lib, FALSE, TRUE)
-  install_packages2(packages, lib, ..., error = error)
+  install_packages2(packages, lib, ..., error = error, quiet = TRUE)
 }
 
 install_packages_missing <- function(packages, lib = NULL, ...) {

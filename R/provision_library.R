@@ -1,11 +1,3 @@
-## The logic here should be to check through a library to check that
-## all dependencies are sorted.  I think that we can do that pretty
-## easily without hitting the network.
-##
-## One issue is if install.packages will add all dependencies when
-## things are a bit incomplete.
-
-
 ##' Create or update a library of packages.
 ##'
 ##' Cross installation of binary files is difficult and I need to come
@@ -93,8 +85,12 @@ provision_library <- function(packages, lib,
     if (!inherits(src, "local_drat")) {
       stop("Invalid input for src")
     }
+    repos <- c(src$cran, src$repos)
+  } else {
+    ## TODO: this is not going to be *quite* enough to deal with the
+    ## dreaded "not setting CRAN" clusterfuck.
+    repos <- getOption("repos", "https://cran.rstudio.com")
   }
-  repos <- c(src$cran, src$repos)
 
   if (check_dependencies) {
     dat <- check_library(packages, lib)
