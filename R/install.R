@@ -55,7 +55,7 @@ install_packages2 <- function(pkgs, ..., error = TRUE) {
   }
 }
 
-
+## TODO: bunch of duplication with R_build (in remote.R)
 build_package <- function(path, vignettes = FALSE, manual = FALSE) {
   desc <- file.path(path, "DESCRIPTION")
   if (!file.exists(desc)) {

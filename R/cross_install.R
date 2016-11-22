@@ -1,36 +1,31 @@
+## TODO: through here, need a mode where we don't throw errors but
+## return information on what could not be installed due to having no
+## installation candidates.
 cross_install_packages <- function(packages, lib, platform,
-                                   ..., repos = NULL, r_version = NULL,
-                                   error = TRUE, upgrade = FALSE) {
+                                   ..., repos = NULL, version = NULL,
+                                   installed_action = "skip") {
   if (lib %in% .libPaths()) {
     stop("Do not use cross_install_packages to install into current library")
   }
 
-  r_version <- check_r_version(r_version)
+  version <- check_r_version(version)
 
   ## NOTE: Getting linux support in properly requires an abstracted
   ## interface to something like buildr or rhub
   platform <- match.arg(platform,
                         c("windows", "macosx", "macosx/mavericks", "linux"))
 
+  ## Hmm, perhaps remove this block:
   if (is.null(repos)) {
     ## This should probably be https://cran.r-cloud.com
     repos <- getOption("repos", "https://cran.rstudio.com")
   }
-
   ## Then we get information about packages:
-  db <- available_packages(repos, platform, r_version)
+  db <- available_packages(repos, platform, version)
 
   dir.create(lib, FALSE, TRUE)
 
-  ## TODO: work out logic here around package upgrades
-  ##
-  ##   upgrade = TRUE: check all package versions that can be increased
-  ##   upgrade = FALSE: don't do so, but let's check to see if all prereqs
-  ##                    are here.
-  ##   upgrade = NA/NULL: skip any checking and just do missing?  Or could do
-  ##                 with missing_only argument perhaps?
-
-  plan <- cross_install_plan(packages, db, lib)
+  plan <- cross_install_plan(packages, db, lib, installed_action)
   if (any(plan$compile)) {
     stop("Packages need compilation; cannot cross-install: ",
          paste(plan$packages[plan$compile], collapse=", "))
@@ -49,18 +44,18 @@ base_packages <- function() {
   rownames(installed.packages(priority = c("base", "recommended")))
 }
 
-check_r_version <- function(r_version) {
-  if (is.null(r_version)) {
-    r_version <- getRversion()
-  } else if (is.character(r_version)) {
-    r_version <- numeric_version(r_version)
-  } else if (!inherits(r_version, "numeric_version")) {
-    stop("Invalid type for r_version")
+check_r_version <- function(version) {
+  if (is.null(version)) {
+    version <- getRversion()
+  } else if (is.character(version)) {
+    version <- numeric_version(version)
+  } else if (!inherits(version, "numeric_version")) {
+    stop("Invalid type for version")
   }
-  if (length(r_version) != 1L) {
-    stop("Expected a single version for r_version")
+  if (length(version) != 1L) {
+    stop("Expected a single version for version")
   }
-  v <- unclass(r_version)[[1]]
+  v <- unclass(version)[[1]]
   len <- length(v)
   if (len < 2 || len > 3) {
     stop("Unexpected version length")
@@ -92,14 +87,14 @@ lib_package_version <- function(package, lib) {
 }
 
 ## TODO: memoise this because it's quite slow
-available_packages <- function(repos, platform, r_version) {
+available_packages <- function(repos, platform, version) {
   provisionr_log("download", "package database")
   pkgs_src <- available.packages(contrib_url(repos, "src", NULL))
   if (platform == "linux") {
     pkgs_bin <- pkgs_src[integer(0), ]
   } else {
-    r_version_str <- paste(r_version[1:2], collapse = ".")
-    pkgs_bin <- available.packages(contrib_url(repos, platform, r_version_str))
+    version_str <- paste(version[1:2], collapse = ".")
+    pkgs_bin <- available.packages(contrib_url(repos, platform, version_str))
   }
   extra <- setdiff(rownames(pkgs_bin), rownames(pkgs_src))
   if (length(extra) > 0L) {
@@ -110,7 +105,7 @@ available_packages <- function(repos, platform, r_version) {
   list(all = pkgs_all, src = pkgs_src, bin = pkgs_bin)
 }
 
-contrib_url <- function(repos, platform, r_version_str) {
+contrib_url <- function(repos, platform, version_str) {
   ## platform should be:
   ##   src
   ##   windows
@@ -119,7 +114,7 @@ contrib_url <- function(repos, platform, r_version_str) {
   if (platform == "src") {
     path <- "src/contrib"
   } else {
-    path <- file.path("bin", platform, "contrib", r_version_str)
+    path <- file.path("bin", platform, "contrib", version_str)
   }
   file.path(sub("/$", "", repos), path)
 }
@@ -137,23 +132,55 @@ parse_deps <- function(x) {
   val[val != "R"]
 }
 
-cross_install_plan <- function(packages, db, lib) {
-  installed <- c(.packages(TRUE, lib), base_packages())
+cross_install_plan <- function(packages, db, lib, installed_action) {
+  if (installed_action == "skip") {
+    skip <- .packages(TRUE, lib)
+  } else {
+    skip <- NULL
+  }
+  skip <- c(skip, base_packages())
+  requested <- packages
 
-  msg <- setdiff(packages, c(db$all[, "Package"], installed))
+  ## TODO: drop the setdiff here, which also drops the lib argument?
+  msg <- setdiff(packages, c(db$all[, "Package"], skip))
   if (length(msg) > 0L) {
     stop(sprintf("Can't find installation candidate for: %s",
                  paste(msg, collapse=", ")))
   }
 
-  packages <- setdiff(recursive_deps(packages, db$all), installed)
+  packages <- setdiff(recursive_deps(packages, db$all), skip)
   msg <- setdiff(packages, db$all[, "Package"])
   if (length(msg) > 0L) {
     stop(sprintf("Can't find installation candidate for dependencies: %s",
                  paste(msg, collapse=", ")))
   }
 
+  if (installed_action == "upgrade") {
+    packages <- setdiff(packages, .packages(TRUE, lib))
+  }
+
   binary <- packages %in% db$bin
+
+  if (installed_action == "upgrade" || installed_action == "upgrade_all") {
+    check <- intersect(packages, .packages(TRUE, lib))
+    v_installed <- setNames(numeric_version(vcapply(
+      file.path(lib, check, "DESCRIPTION"), read.dcf, "Version")), check)
+
+    v_db <- setNames(character(length(check)), check)
+    i <- match(check, packages)
+    j <- binary[i]
+    v_db[j] <- db$bin[check[j], "Version"]
+    v_db[!j] <- db$src[check[!j], "Version"]
+    v_db <- numeric_version(v_db)
+
+    current <- v_installed >= v_db
+    drop <- i[current]
+    if (length(drop) > 0L) {
+      packages <- packages[-drop]
+      binary <- binary[-drop]
+    }
+  }
+
   compile <- rep_len(FALSE, length(packages))
   if (any(!binary)) {
     j <- match(packages[!binary], db$src[, "Package"])
@@ -166,6 +193,7 @@ cross_install_plan <- function(packages, db, lib) {
 }
 
 cross_install_package <- function(package, db, lib, binary, platform) {
+  provisionr_log("install", package)
   tmp <- tempfile()
   dir.create(tmp)
   on.exit(unlink(tmp, recursive=TRUE), add = TRUE)
@@ -180,7 +208,7 @@ cross_install_package <- function(package, db, lib, binary, platform) {
     path <- file_unurl(url)
   } else {
     path <- file.path(tmp, basename(url))
-    download_file(url, path)
+    download_file(url, destfile = path)
   }
 
   if (binary) {

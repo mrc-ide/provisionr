@@ -66,7 +66,7 @@ parse_remotes <- function(str) {
   lapply(strsplit(str, "\\s*,\\s*")[[1]], f)
 }
 
-drat_build <- function(specs, path, verbose = TRUE) {
+drat_build <- function(specs, path) {
   drat_repo_init(path)
   desc <- list()
 
@@ -75,12 +75,14 @@ drat_build <- function(specs, path, verbose = TRUE) {
   while (length(specs) > 0L) {
     for (x in lapply(specs, parse_remote)) {
       provisionr_log("drat", x$spec)
-      pkg <- build_package(x, verbose)
+      pkg <- drat_build_package(x)
       d <- as.list(extract_DESCRIPTION(pkg)[1L, ])
       d$package <- pkg
       d$md5 <- unname(tools::md5sum(pkg))
       drat::insertPackage(pkg, path, commit = FALSE)
       desc[[x$spec]] <- d
+      ## TODO: I think that I need to put the dependent repos in here
+      ## too so that I can query them later?
       st$set(x$spec, d)
     }
 
@@ -94,10 +96,10 @@ drat_build <- function(specs, path, verbose = TRUE) {
   desc
 }
 
-build_package <- function(x, verbose) {
+drat_build_package <- function(x) {
   tmp <- tempfile()
   dir.create(tmp)
-  pkg <- download_package(x, !verbose)
+  pkg <- download_package(x)
   unzip(pkg, exdir = tmp)
   file.remove(pkg)
   target <- dir(tmp, full.names = TRUE)
@@ -107,6 +109,7 @@ build_package <- function(x, verbose) {
   R_build(target)
 }
 
+## TODO: bunch of duplication with build_package (in install.R)
 R_build <- function(path) {
   owd <- setwd(dirname(path))
   on.exit(setwd(owd))
@@ -154,13 +157,13 @@ read_description <- function(x) {
   read.dcf(desc)
 }
 
-download_package <- function(x, quiet) {
+download_package <- function(x) {
   ## When downloading files, keep the same extension, or we'll confuse
   ## things later.
   if (x$type == "github") {
-    pkg <- download_file(x$url_package, quiet = quiet, keep_ext = TRUE)
+    pkg <- download_file(x$url_package, keep_ext = TRUE)
   } else if (x$type == "url") {
-    pkg <- download_file(x$url_package, quiet = quiet, keep_ext = TRUE)
+    pkg <- download_file(x$url_package, keep_ext = TRUE)
   } else if (x$type == "local") {
     if (x$is_directory) {
       stop("needs work")

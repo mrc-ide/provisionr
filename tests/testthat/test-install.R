@@ -14,6 +14,6 @@ test_that("throw on broken package", {
   pkg <- build_package("broken")
   on.exit(file.remove(pkg))
   expect_error(suppressWarnings(
-    install_packages(pkg, error = TRUE, quiet = TRUE)),
+    install_packages(pkg, repos = NULL, error = TRUE, quiet = TRUE)),
     "had non-zero exit status")
 })
