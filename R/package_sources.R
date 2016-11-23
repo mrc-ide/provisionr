@@ -37,7 +37,14 @@ package_sources <- function(cran = NULL, repos = NULL,
   }
 
   self <- list(cran = cran, repos = repos, spec = spec)
-  self$build <- function(path) local_drat(self, path)$build()
+  self$build <- function(path, refresh = FALSE) {
+    ret <- local_drat(self, path)
+    skip <- !refresh && file.exists(path) && all(vlapply(spec, ret$db$exists))
+    if (!skip) {
+      ret$build()
+    }
+    ret
+  }
   class(self) <- "package_sources"
   self
 }
@@ -52,6 +59,7 @@ local_drat <- function(src, path) {
     drat_build(src$spec, path)
     self
   }
+
   class(self) <- "local_drat"
   self
 }

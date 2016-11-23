@@ -71,3 +71,21 @@ test_that("tarball", {
   expect_equal(k, paste0("local::", pkg))
   expect_equal(ans$db$get(k)$Package, "hello")
 })
+
+test_that("update", {
+  path <- tempfile()
+  dir.create(path)
+  file.copy("hello", path, recursive = TRUE)
+  hello <- file.path(path, "hello")
+
+  src <- package_sources(local = hello)
+  tmp <- tempfile()
+  expect_message(dat <- src$build(tmp), "drat")
+  expect_silent(src$build(tmp))
+
+  ## Now, we update the package:
+  v <- alter_package_version(hello, increase = TRUE)
+  expect_silent(src$build(tmp))
+  expect_message(dat <- src$build(tmp, TRUE), "drat")
+  expect_equal(dat$db$get(dat$db$list())$Version, as.character(v))
+})

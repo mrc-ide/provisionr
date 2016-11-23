@@ -72,6 +72,13 @@ drat_storr <- function(path) {
   storr::storr_rds(path_drat_storr(path), mangle_key = TRUE)
 }
 
+## TODO: It's possible that this does too much (with the remotes), but
+## such is life.
+##
+## TODO: It might be nice to go through and check to see if it's worth
+## refreshing the store here; we could do that if we have a fast way
+## of ripping through the directories and determine if any file has
+## changed.
 drat_build <- function(specs, path) {
   drat_repo_init(path)
   desc <- list()
@@ -127,7 +134,6 @@ R_build <- function(path) {
   ## (with full.names = TRUE) but it does seem to be which is sad.
   normalizePath(setdiff(dir(full.names = TRUE), prev))
 }
-
 
 github_url_zip <- function(x) {
   sprintf("https://github.com/%s/%s/archive/%s.zip",

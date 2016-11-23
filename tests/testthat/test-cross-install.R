@@ -38,7 +38,7 @@ test_that("binary cross install with deps", {
   expect_true(all(p1$packages %in% p4$packages))
 
   ## Bit of fiddling with version numbers:
-  drop_package_version(file.path(lib, "openssl"))
+  alter_package_version(file.path(lib, "openssl"), increase = FALSE)
 
   q1 <- cross_install_plan("httr", db, lib, "skip")
   expect_equal(q1, p1)
