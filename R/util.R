@@ -51,3 +51,7 @@ file_unurl <- function(url) {
     sub("^file://", "", url)
   }
 }
+
+is_directory <- function(path) {
+  file.info(path, extra_cols = FALSE)$isdir
+}

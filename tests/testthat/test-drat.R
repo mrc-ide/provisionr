@@ -42,3 +42,32 @@ test_that("build drat", {
   expect_true(
     length(dir(file.path(path, "src", "contrib"), "odin_.*\\.tar\\.gz$")) > 0)
 })
+
+test_that("directory", {
+  path <- tempfile()
+  dir.create(path)
+  file.copy("hello", path, recursive = TRUE)
+  hello <- file.path(path, "hello")
+
+  src <- package_sources(local = hello)
+  ans <- src$build(tempfile())
+
+  k <- ans$db$list()
+  expect_equal(k, paste0("local::", hello))
+  expect_equal(ans$db$get(k)$Package, "hello")
+})
+
+test_that("tarball", {
+  path <- tempfile()
+  dir.create(path)
+  file.copy("hello", path, recursive = TRUE)
+  hello <- file.path(path, "hello")
+  pkg <- build_package(hello)
+
+  src <- package_sources(local = pkg)
+  ans <- src$build(tempfile())
+
+  k <- ans$db$list()
+  expect_equal(k, paste0("local::", pkg))
+  expect_equal(ans$db$get(k)$Package, "hello")
+})

@@ -2,6 +2,8 @@ package_sources <- function(cran = NULL, repos = NULL,
                             github = NULL, local = NULL) {
   if (is.null(cran)) {
     cran <- "https://cran.rstudio.com"
+  } else {
+    assert_scalar_character(cran)
   }
 
   if (!is.null(repos)) {
@@ -43,8 +45,7 @@ package_sources <- function(cran = NULL, repos = NULL,
 local_drat <- function(src, path) {
   ## This should keep track of when it was last built, what is in it,
   ## etc.
-  self <- list(cran = src$cran,
-               repos = c(src$repos, path),
+  self <- list(src = src,
                path = path,
                db = drat_storr(path))
   self$build <- function() {

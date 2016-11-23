@@ -85,7 +85,7 @@ provision_library <- function(packages, lib,
     if (!inherits(src, "local_drat")) {
       stop("Invalid input for src")
     }
-    repos <- c(src$cran, src$repos)
+    repos <- c(src$src$cran, src$src$repos, src$path)
   } else {
     ## TODO: this is not going to be *quite* enough to deal with the
     ## dreaded "not setting CRAN" clusterfuck.

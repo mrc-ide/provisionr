@@ -1,0 +1,3 @@
+hello <- function() {
+  "hello"
+}

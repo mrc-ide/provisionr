@@ -81,7 +81,7 @@ drat_build <- function(specs, path) {
   while (length(specs) > 0L) {
     for (x in lapply(specs, parse_remote)) {
       provisionr_log("drat", x$spec)
-      pkg <- drat_build_package(x)
+      pkg <- download_package(x)
       d <- as.list(extract_DESCRIPTION(pkg)[1L, ])
       d$tgz <- basename(pkg)
       d$md5 <- unname(tools::md5sum(pkg))
@@ -103,10 +103,10 @@ drat_build <- function(specs, path) {
   desc
 }
 
-drat_build_package <- function(x) {
+github_build_package <- function(x) {
   tmp <- tempfile()
   dir.create(tmp)
-  pkg <- download_package(x)
+  pkg <- download_file(x$url_package, keep_ext = TRUE)
   unzip(pkg, exdir = tmp)
   file.remove(pkg)
   target <- dir(tmp, full.names = TRUE)
@@ -148,35 +148,27 @@ github_url_description <- function(x) {
   file.path(ret, "DESCRIPTION")
 }
 
-read_description <- function(x) {
-  if (x$type == "github") {
-    desc <- download_file(x$url_description, quiet = TRUE)
-    on.exit(file.remove(desc))
-  } else if (x$type == "url") {
-    stop("needs work")
-  } else if (x$type == "local") {
-    if (is.null(x$url_description)) {
-      stop("needs work")
-    } else {
-      desc <- x$url_description
-    }
-  }
-  read.dcf(desc)
-}
-
 download_package <- function(x) {
   ## When downloading files, keep the same extension, or we'll confuse
   ## things later.
   if (x$type == "github") {
-    pkg <- download_file(x$url_package, keep_ext = TRUE)
+    pkg <- github_build_package(x)
   } else if (x$type == "url") {
     pkg <- download_file(x$url_package, keep_ext = TRUE)
   } else if (x$type == "local") {
     if (x$is_directory) {
-      stop("needs work")
+      ## NOTE: A disadvantage of doing this is that it will rebuild
+      ## the package *every time*, adding a Packaged: field to the
+      ## description which will change the md5 and make it look like
+      ## things have changed when they have not really.  I'll consider
+      ## writing something to hash a directory that we can use to
+      ## check to see if it's worth rebuilding the package.
+      pkg <- build_package(x$url_package)
     } else {
       pkg <- x$url_package
     }
+  } else {
+    stop("[provisionr bug] invalid type") # nocov
   }
   pkg
 }
@@ -228,4 +220,11 @@ extract_DESCRIPTION <- function(filename) {
 
 path_drat_storr <- function(path_drat) {
   file.path(path_drat, "storr")
+}
+
+split_spec <- function(x) {
+  re <- "(^[^:]+)::(.+)$"
+  stopifnot(all(grepl(re, x)))
+  cbind(type = sub(re, "\\1", x),
+        value = sub(re, "\\2", x))
 }
