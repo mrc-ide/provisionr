@@ -98,7 +98,7 @@ available_packages <- function(repos, platform, version) {
   }
 
   pkgs_src <- available.packages(contrib_url(repos, "src", NULL))
-  if (platform == "linux") {
+  if (is.null(platform) || platform == "linux") {
     pkgs_bin <- pkgs_src[integer(0), ]
   } else {
     version_str <- paste(version[1:2], collapse = ".")

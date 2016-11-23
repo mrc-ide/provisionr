@@ -1,4 +1,6 @@
 install_packages <- function(packages, lib = NULL, ...,
+                             repos = NULL,
+                             standalone = FALSE,
                              installed_action = "skip",
                              error = TRUE) {
   ## TODO: At the moment, this is going to ignore the installed_action
@@ -13,6 +15,33 @@ install_packages <- function(packages, lib = NULL, ...,
   }
   lib <- default_lib(lib)
   dir.create(lib, FALSE, TRUE)
+  if (standalone) {
+    repos <- repos %||% getOption("repos", "https://cran.rstudio.com")
+    db <- available_packages(repos, NULL, NULL)
+    ## TODO: a different plan will be needed here when not creating a
+    ## standalong repo; probably the biggest difference will be that
+    ## 'lib' should be a vector of libraries to look in.
+    ##
+    ## TODO: Obviously rename cross_install_plan
+    ##
+    ## TODO: probably refactor cross_install_plan as all we care about
+    ## here is the installation candidates but the binary/compile bit
+    ## can be inferred later from the database given the list.
+    ## Probably as useful will be something indicating if things are
+    ## being upgraded or installed (which becomes less obvious when
+    ## the number of libraries grows)
+    ##
+    ## TODO: if we have the db we can pass it through as available
+    ## perhaps (though it interacts in annoying ways with
+    ## binary/source installation).
+    plan <- cross_install_plan(packages, db, lib, installed_action)
+    extra <- setdiff(plan$packages, packages)
+    if (length(extra) > 0L) {
+      provisionr_log("deps", sprintf("%d extra: %s", length(extra),
+                                     paste(extra, collapse = ", ")))
+      packages <- plan$packages
+    }
+  }
   install_packages2(packages, lib, ..., error = error, quiet = TRUE)
 }
 

@@ -105,7 +105,7 @@ provision_library <- function(packages, lib,
   ## dependencies fairly happily.  Leaving this alone for now.
   if (self) {
     res <- with_repos(repos,
-                      install_packages(packages, lib,
+                      install_packages(packages, lib, standalone = TRUE,
                                        installed_action = installed_action))
   } else {
     res <- with_repos(repos,

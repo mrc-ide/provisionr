@@ -1,6 +1,6 @@
 make_local_cran <- function() {
   path <- "local_cran"
-  packages <- c("devtools", "ape")
+  packages <- c("devtools", "progress", "ape")
 
   version <- check_r_version(NULL)
   version_str <- paste(version, collapse = ".")

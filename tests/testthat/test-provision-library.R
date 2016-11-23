@@ -13,3 +13,11 @@ test_that("own platform, single package, compiled", {
   expect_equal(dir(lib), "ape")
   expect_equal(.packages(TRUE, lib), "ape")
 })
+
+test_that("own platform, multiple packages", {
+  lib <- tempfile()
+  ## OK, this shows an issue; we want the library to be *standalone*
+  res <- provision_library("progress", lib)
+  expect_true("progress" %in% dir(lib))
+  expect_gt(length(dir(lib)), 1)
+})
