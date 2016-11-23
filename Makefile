@@ -54,6 +54,9 @@ vignettes: vignettes/provisionr.Rmd
 	mkdir -p inst/doc
 	cp vignettes/*.html vignettes/*.Rmd inst/doc
 
+local_cran:
+	cd tests/testthat && ${RSCRIPT} local_cran_build.R
+
 staticdocs:
 	@mkdir -p inst/staticdocs
 	${RSCRIPT} -e "library(methods); staticdocs::build_site()"

@@ -33,7 +33,6 @@ cross_install_packages <- function(packages, lib, platform,
 
   for (i in seq_along(plan$packages)) {
     p <- plan$packages[[i]]
-    provisionr_log("cross", p)
     cross_install_package(p, db, lib, plan$binary[[i]], platform)
   }
 
@@ -93,7 +92,9 @@ available_packages <- function(repos, platform, version) {
   is_local <- grepl("^(/|file://)", repos)
   if (any(is_local)) {
     i <- file.exists(repos)
-    repos[i] <- file_url(repos[i])
+    if (any(i)) {
+      repos[i] <- file_url(repos[i])
+    }
   }
 
   pkgs_src <- available.packages(contrib_url(repos, "src", NULL))
@@ -204,7 +205,7 @@ cross_install_plan <- function(packages, db, lib, installed_action) {
 }
 
 cross_install_package <- function(package, db, lib, binary, platform) {
-  provisionr_log("install", package)
+  provisionr_log("cross", package)
   tmp <- tempfile()
   dir.create(tmp)
   on.exit(unlink(tmp, recursive=TRUE), add = TRUE)

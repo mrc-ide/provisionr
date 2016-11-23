@@ -1,4 +1,13 @@
-options(repos = "https://cran.rstudio.com")
+## Try to fetch things from a local cran mirror.  Create this with
+## `make_local_cran()` which downloads the packages required to run
+## the tests.  There are a few 10s of MB of files (20MB as of Nov
+## 2016).
+if (file.exists("local_cran")) {
+  options(repos = c(file_url("local_cran"), "https://cran.rstudio.com"))
+} else {
+  options(repos = "https://cran.rstudio.com")
+}
+
 Sys.setenv(R_TESTS="")
 
 drop_package_version <- function(path) {
