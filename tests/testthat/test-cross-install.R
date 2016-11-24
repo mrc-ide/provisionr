@@ -60,3 +60,15 @@ test_that("cross install source package", {
   provision_library("kitten", lib, platform = "windows", src = drat)
   expect_equal(dir(lib), "kitten")
 })
+
+## This deals with an issue where an `importFrom` directive in a
+## NAMESPACE file causes lazyloading of source files that depend on
+## binary files to fail
+test_that("cross install package that triggers load", {
+  src <- package_sources(local = "lazyproblem")
+  drat <- src$build(tempfile())
+  path <- tempfile()
+  provision_library("lazyproblem", path, platform = "windows", src = drat)
+  pkgs <- .packages(TRUE, path)
+  expect_equal(sort(pkgs), sort(c("deSolve", "lazyproblem")))
+})

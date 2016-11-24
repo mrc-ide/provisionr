@@ -235,15 +235,28 @@ cross_install_package <- function(package, db, lib, binary, platform) {
   if (binary) {
     unzip(path, exdir = lib)
   } else {
-    ## NOTE: This would probably be better done with callr::rcmd_safe
-    ## but it does not yet deal with stderr nicely
-    env <- c(R_LIBS_USER=paste(c(.libPaths()), collapse = .Platform$path.sep),
+    ## We need to install the package into a temporary library and
+    ## move it into place because otherwise preparing the package for
+    ## lazy loading will cause issues if the package triggers loading
+    ## a package with compiled dependencies.  This is tested in the
+    ## "missing compiled packages" at least.
+    ##
+    ## TODO: I think that means that we must have dependencies of each
+    ## package installed *locally* already, in which case I probably
+    ## need to provide better diagnostics.  This will be an issue for
+    ## things like testing on CRAN and the like because I'm probably
+    ## going to trigger installation failure.
+    lib_tmp <- tempfile("cross_tmp_lib", tmpdir = lib)
+    dir.create(lib_tmp)
+    on.exit(try(unlink(lib_tmp, recursive = TRUE), silent = TRUE), add = TRUE)
+    env <- c(R_LIBS_USER = paste(.libPaths(), collapse = .Platform$path.sep),
              CYGWIN = "nodosfilewarning")
     env <- sprintf("%s=%s", names(env), unname(env))
     args <- c("CMD", "INSTALL", "--no-test-load",
-              paste0("--library=", shQuote(normalizePath(lib, "/"))),
+              paste0("--library=", shQuote(normalizePath(lib_tmp, "/"))),
               shQuote(normalizePath(path)))
     call_system(file.path(R.home(), "bin", "R"), args, env = env)
+    file.rename(file.path(lib_tmp, x$Package), file.path(lib, x$Package))
   }
 
   invisible(TRUE)
