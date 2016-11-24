@@ -89,3 +89,21 @@ test_that("update", {
   expect_message(dat <- src$build(tmp, TRUE), "drat")
   expect_equal(dat$db$get(dat$db$list())$Version, as.character(v))
 })
+
+test_that("binary package", {
+  tmp <- tempfile()
+  dir.create(tmp)
+  url <- contrib_url(getOption("repos")[[1]], "windows", NULL)
+  res <- download.packages("ape", tmp, contriburl = url, type = "win.binary")
+  pkg <- res[[2]]
+
+  src <- package_sources(local = pkg)
+  tmp <- tempfile()
+  expect_message(dat <- src$build(tmp), "drat")
+  expect_silent(src$build(tmp))
+
+  db <- available_packages(tmp, "windows", NULL)
+  expect_equal(nrow(db$src), 0)
+  expect_equal(nrow(db$bin), 1)
+  expect_equal(rownames(db$bin), "ape")
+})
