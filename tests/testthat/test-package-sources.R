@@ -32,5 +32,6 @@ test_that("build", {
   expect_equal(unname(tools::md5sum(tgz)), dat$md5)
   expect_equal(dat$Package, "kitten")
 
-  expect_equal(ret$repos, tmp)
+  expect_equal(ret$src, src)
+  expect_equal(ret$path, tmp)
 })

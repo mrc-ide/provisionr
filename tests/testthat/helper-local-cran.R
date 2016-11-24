@@ -3,9 +3,11 @@ make_local_cran <- function() {
   packages <- c("devtools", "progress", "ape")
 
   version <- check_r_version(NULL)
-  version_str <- paste(version, collapse = ".")
+  version_str <- r_version_str(version)
   repo <- "https://cran.rstudio.com"
-  db <- available_packages(repo, "windows", version)
+  db <- available_packages(repo, "windows", NULL)
+
+  tmp <- available_packages(normalizePath(path), "windows", NULL)
 
   pkgs <- recursive_deps(packages, db$all)
 
@@ -20,6 +22,6 @@ make_local_cran <- function() {
   download.packages(pkgs, dest_src, db$src, repo, url_src, type = "source")
   download.packages(pkgs, dest_bin, db$bin, repo, url_bin, type = "win.binary")
 
-  tools::write_PACKAGES(dest_src, "source")
-  tools::write_PACKAGES(dest_bin, "win.binary")
+  tools::write_PACKAGES(dest_src, type = "source")
+  tools::write_PACKAGES(dest_bin, type = "win.binary")
 }

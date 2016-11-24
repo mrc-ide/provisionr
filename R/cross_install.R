@@ -9,8 +9,6 @@ cross_install_packages <- function(packages, lib, platform,
   }
   dir.create(lib, FALSE, TRUE)
 
-  version <- check_r_version(version)
-
   ## NOTE: Getting linux support in properly requires an abstracted
   ## interface to something like buildr or rhub
   platform <- match.arg(platform, valid_platforms())
@@ -54,12 +52,16 @@ check_r_version <- function(version) {
   if (length(version) != 1L) {
     stop("Expected a single version for version")
   }
+  version
+}
+
+r_version_str <- function(version, n = 2L) {
+  v <- unclass(check_r_version(version))[[1]]
   v <- unclass(version)[[1]]
-  len <- length(v)
-  if (len < 2 || len > 3) {
+  if (length(v) < n) {
     stop("Unexpected version length")
   }
-  v[1:2]
+  paste(v[seq_len(n)], collapse = ".")
 }
 
 recursive_deps <- function(x, db) {
@@ -97,16 +99,20 @@ available_packages <- function(repos, platform, version) {
     }
   }
 
+  url_src <- contrib_url(repos, "src", NULL)
+  if (any(is_local)) {
+    lapply(file_unurl(url_src[is_local]), drat_ensure_PACKAGES)
+  }
   pkgs_src <- available.packages(contrib_url(repos, "src", NULL))
   if (is.null(platform) || platform == "linux") {
     pkgs_bin <- pkgs_src[integer(0), ]
   } else {
-    version_str <- paste(version[1:2], collapse = ".")
-    repos_bin <- contrib_url(repos, platform, version_str)
+    version_str <- r_version_str(check_r_version(version), 2L)
+    url_bin <- contrib_url(repos, platform, version_str)
     if (any(is_local)) {
-      lapply(file_unurl(repos_bin[is_local]), drat_add_empty_bin)
+      lapply(file_unurl(url_bin[is_local]), drat_ensure_PACKAGES)
     }
-    pkgs_bin <- available.packages(repos_bin)
+    pkgs_bin <- available.packages(url_bin)
   }
   extra <- setdiff(rownames(pkgs_bin), rownames(pkgs_src))
   if (length(extra) > 0L) {
@@ -118,6 +124,9 @@ available_packages <- function(repos, platform, version) {
 }
 
 contrib_url <- function(repos, platform, version_str) {
+  if (is.null(version_str)) {
+    version_str <- r_version_str(check_r_version(version_str))
+  }
   ## platform should be:
   ##   src
   ##   windows
@@ -240,7 +249,7 @@ cross_install_package <- function(package, db, lib, binary, platform) {
   invisible(TRUE)
 }
 
-drat_add_empty_bin <- function(path) {
+drat_ensure_PACKAGES <- function(path) {
   path_PACKAGES <- file.path(path, "PACKAGES")
   if (!file.exists(path_PACKAGES)) {
     dir.create(path, FALSE, TRUE)
