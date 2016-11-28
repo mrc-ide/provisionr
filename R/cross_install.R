@@ -1,37 +1,32 @@
 ## TODO: through here, need a mode where we don't throw errors but
 ## return information on what could not be installed due to having no
 ## installation candidates.
-cross_install_packages <- function(packages, lib, platform,
-                                   ..., repos = NULL, version = NULL,
-                                   installed_action = "skip") {
+cross_install_packages <- function(packages, lib, db, ...,
+                                   installed_action = "skip",
+                                   allow_missing = FALSE,
+                                   require_compilation = NULL) {
   if (lib %in% .libPaths()) {
     stop("Do not use cross_install_packages to install into current library")
   }
   dir.create(lib, FALSE, TRUE)
 
-  ## NOTE: Getting linux support in properly requires an abstracted
-  ## interface to something like buildr or rhub
-  platform <- match.arg(platform, valid_platforms())
-
-  ## Hmm, perhaps remove this block:
-  if (is.null(repos)) {
-    ## This should probably be https://cran.r-cloud.com
-    repos <- getOption("repos", "https://cran.rstudio.com")
-  }
-  ## Then we get information about packages:
-  db <- available_packages(repos, platform, version)
-
-  dir.create(lib, FALSE, TRUE)
-
   plan <- cross_install_plan(packages, db, lib, installed_action)
   if (any(plan$compile)) {
-    stop("Packages need compilation; cannot cross-install: ",
-         paste(plan$packages[plan$compile], collapse=", "))
+    needs_compilation <- plan$packages[plan$compile]
+    msg <- paste("Packages need compilation; cannot cross-install:",
+                 paste(needs_compilation, collapse=", "))
+    if (allow_missing) {
+      plan$missing <- db$src[needs_compilation, , drop = FALSE]
+      message(msg)
+    } else {
+      stop(msg)
+    }
   }
 
   for (i in seq_along(plan$packages)) {
-    p <- plan$packages[[i]]
-    cross_install_package(p, db, lib, plan$binary[[i]], platform)
+    if (!plan$compile[i]) {
+      cross_install_package(plan$packages[[i]], lib, plan$binary[[i]], db)
+    }
   }
 
   plan
@@ -120,7 +115,8 @@ available_packages <- function(repos, platform, version) {
   } else {
     pkgs_all <- pkgs_src
   }
-  list(all = pkgs_all, src = pkgs_src, bin = pkgs_bin)
+  list(all = pkgs_all, src = pkgs_src, bin = pkgs_bin,
+       platform = platform, version = version)
 }
 
 contrib_url <- function(repos, platform, version_str) {
@@ -180,7 +176,7 @@ cross_install_plan <- function(packages, db, lib, installed_action) {
     packages <- setdiff(packages, .packages(TRUE, lib))
   }
 
-  binary <- packages %in% db$bin
+  binary <- packages %in% rownames(db$bin)
 
   if (installed_action == "upgrade" || installed_action == "upgrade_all") {
     check <- intersect(packages, .packages(TRUE, lib))
@@ -213,12 +209,13 @@ cross_install_plan <- function(packages, db, lib, installed_action) {
        compile = compile)
 }
 
-cross_install_package <- function(package, db, lib, binary, platform) {
+cross_install_package <- function(package, lib, binary, db) {
   provisionr_log("cross", package)
   tmp <- tempfile()
   dir.create(tmp)
-  on.exit(unlink(tmp, recursive=TRUE), add = TRUE)
+  on.exit(unlink(tmp, recursive = TRUE), add = TRUE)
 
+  platform <- db$platform
   db_use <- db[[if (binary) "bin" else "src"]]
   x <- as.list(db_use[match(package, db_use[, "Package"]), ])
 

@@ -46,13 +46,20 @@
 ##'   their dependencies) and \code{"skip"} (do not install or upgrade
 ##'   any package that is already installed).
 ##'
+##' @param allow_missing For cross-installation (via
+##'   \code{\link{cross_install}} when \code{platform} is
+##'   non-\code{NULL}), allow packages to be missing that need to be
+##'   compiled?  The interface here is going to change a bunch, so
+##'   watch out...
+##'
 ##' @export
 ##' @author Rich FitzJohn
 provision_library <- function(packages, lib,
                               platform = NULL, version = NULL,
                               src = NULL, path_drat = NULL,
                               check_dependencies = TRUE,
-                              installed_action = "replace") {
+                              installed_action = "replace",
+                              allow_missing = FALSE) {
   assert_scalar_character(lib)
   assert_scalar_logical(check_dependencies)
 
@@ -72,6 +79,12 @@ provision_library <- function(packages, lib,
   ## and version as a self install
   self <- is.null(platform) && is.null(version)
 
+  ## TODO: filter all this shit out into its own little function, I
+  ## think.  That way I can check it more easily in atest.  It's
+  ## really something that applies only in cross installation where we
+  ## have a local drat.  In which case we can probably pass the src
+  ## object into the plan and save all this!
+  db <- NULL
   if (!is.null(src)) {
     if (inherits(src, "package_sources")) {
       if (is.null(path_drat)) {
@@ -85,11 +98,36 @@ provision_library <- function(packages, lib,
     if (!inherits(src, "local_drat")) {
       stop("Invalid input for src")
     }
-    repos <- c(src$src$cran, src$src$repos, src$path)
+    ## Repos are ordered from highest to lowest priority:
+    repos <- c(src$path, src$src$repos, src$src$cran)
+    db <- available_packages(repos, platform, version)
+
+    ## Filter off the binaries for anything listed in the drat repo:
+    special <- unname(
+      read.dcf(file.path(contrib_url(src$path, "src", NULL), "PACKAGES"),
+               "Package")[, "Package"])
+    i <- which(rownames(db$bin) %in% special)
+    drop <- i[db$bin[i, "Repository"] != file_url(src$path)]
+    if (length(drop) > 0L) {
+      db$bin <- db$bin[-i, , drop = FALSE]
+      if (self) {
+        warning("It's highly likely that this is not going to work as expected")
+      }
+    }
   } else {
     ## TODO: this is not going to be *quite* enough to deal with the
     ## dreaded "not setting CRAN" clusterfuck.
     repos <- getOption("repos", "https://cran.rstudio.com")
+    ## TODO: until install_packages can deal with the db here, it's
+    ## not being included.  I have no idea how it rationalises the
+    ## difference between binary and source installs.  Soon I'll pull
+    ## it regardless, I think, because then I can throw it at
+    ## check_library to get the full set of recursive dependencies.
+    ## Basically, trying to understand how "both" works is the trick
+    ## here.
+    if (!self) {
+      db <- available_packages(repos, platform, version)
+    }
   }
 
   if (check_dependencies) {
@@ -97,12 +135,6 @@ provision_library <- function(packages, lib,
     packages <- union(packages, dat$missing)
   }
 
-  ## The upgrade thing here is very difficult; if someone removes a
-  ## dependency, it's pretty difficult to check this.  But we *can*
-  ## read package DESCRIPTIUON files (though don't use
-  ## packageDescription because that will use a loaded one intead of
-  ## the one in the library).  We can use this to recurse through
-  ## dependencies fairly happily.  Leaving this alone for now.
   if (self) {
     res <- with_repos(repos,
                       install_packages(packages, lib, standalone = TRUE,
@@ -110,8 +142,9 @@ provision_library <- function(packages, lib,
   } else {
     res <- with_repos(repos,
                       cross_install_packages(
-                        packages, lib, platform, version = version,
-                        installed_action = installed_action))
+                        packages, lib, db,
+                        installed_action = installed_action,
+                        allow_missing = allow_missing))
   }
 
   ## TODO: should report on what was installed perhaps?  We're going to need to

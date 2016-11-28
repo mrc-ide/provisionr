@@ -2,14 +2,16 @@ context("cross_install")
 
 test_that("binary cross install", {
   lib <- tempfile()
-  res <- cross_install_packages("ape", lib, "windows")
+  db <- available_packages("https://cran.rstudio.com", "windows", NULL)
+  res <- cross_install_packages("ape", lib, db)
   expect_equal(dir(lib), "ape")
   expect_true(file.exists(file.path(lib, "ape", "libs", "x64", "ape.dll")))
 })
 
 test_that("binary cross install with deps", {
   lib <- tempfile()
-  res <- cross_install_packages("devtools", lib, "windows")
+  db <- available_packages("https://cran.rstudio.com", "windows", NULL)
+  res <- cross_install_packages("devtools", lib, db)
   expect_true("devtools" %in% dir(lib))
   expect_true("httr" %in% dir(lib))
   expect_true(file.exists(
@@ -25,8 +27,6 @@ test_that("binary cross install with deps", {
   dat <- check_library("devtools", lib)
   expect_true("httr" %in% dat$missing)
 
-  db <- available_packages(getOption("repos", "https://cran.rstudio.com"),
-                           "windows", check_r_version(NULL))
   p1 <- cross_install_plan("httr", db, lib, "skip")
   expect_equal(p1$packages, c("curl", "httr"))
   p2 <- cross_install_plan("httr", db, lib, "upgrade")
@@ -71,4 +71,38 @@ test_that("cross install package that triggers load", {
   provision_library("lazyproblem", path, platform = "windows", src = drat)
   pkgs <- .packages(TRUE, path)
   expect_equal(sort(pkgs), sort(c("deSolve", "lazyproblem")))
+})
+
+test_that("missing compiled packages", {
+  ## This is unlikely to resolve itself any time soon; not on CRAN and
+  ## dependent on two other packages that are not on CRAN that require
+  ## compilation (dde, ring) and one that does not require compilation
+  ## (rcmdshlib).
+  ##
+  ## TODO: cache the calls here, possibly across sessions?
+  src <- package_sources(github = "richfitz/dde")
+  drat <- src$build(tempfile())
+
+  ## NOTE: This triggers the lazy loading issue that I had in context
+  ## (and had solved there at some point) where lazy loading of one
+  ## package triggers a failure in the package installation.
+  path <- tempfile()
+  expect_error(provision_library("dde", path, platform = "windows", src = drat),
+               "Packages need compilation")
+  ans <- provision_library("dde", path, platform = "windows", src = drat,
+                           allow_missing = TRUE)
+  expect_equal(sort(rownames(ans$missing)),
+               sort(c("dde", "ring")))
+})
+
+test_that("prefer drat files", {
+  ## TODO: this can actually point at the source file already in the
+  ## same repo.
+  src <- package_sources(github = "cran/ape")
+  drat <- src$build(tempfile())
+  path <- tempfile()
+  ans <- provision_library("ape", path, platform = "windows", src = drat,
+                           allow_missing = TRUE)
+  expect_equal(rownames(ans$missing), "ape")
+  expect_equal(dir(path), character(0))
 })

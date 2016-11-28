@@ -6,7 +6,7 @@
 \usage{
 provision_library(packages, lib, platform = NULL, version = NULL,
   src = NULL, path_drat = NULL, check_dependencies = TRUE,
-  installed_action = "replace")
+  installed_action = "replace", allow_missing = FALSE)
 }
 \arguments{
 \item{packages}{A character vector of packages to include}
@@ -50,6 +50,12 @@ lag behind the versions in repositories), \code{"upgrade"}
 (upgrade packages listed in \code{"packages"} only, but not
 their dependencies) and \code{"skip"} (do not install or upgrade
 any package that is already installed).}
+
+\item{allow_missing}{For cross-installation (via
+\code{\link{cross_install}} when \code{platform} is
+non-\code{NULL}), allow packages to be missing that need to be
+compiled?  The interface here is going to change a bunch, so
+watch out...}
 }
 \description{
 Create or update a library of packages.
