@@ -92,23 +92,3 @@ install_packages2 <- function(pkgs, ..., error = TRUE) {
     stop(e$message, call. = FALSE)
   }
 }
-
-## TODO: bunch of duplication with R_build (in remote.R)
-build_package <- function(path, vignettes = FALSE, manual = FALSE) {
-  desc <- file.path(path, "DESCRIPTION")
-  if (!file.exists(desc)) {
-    stop("Did not find a valid package at ", path)
-  }
-  dat <- read.dcf(desc, c("Package", "Version"))
-  dest <- sprintf("%s_%s.tar.gz", dat[, "Package"], dat[, "Version"])
-  owd <- setwd(dirname(path))
-  on.exit(setwd(owd))
-
-  opts <- c(character(0),
-            if (!vignettes) "--no-build-vignettes",
-            if (!manual) "--no-manual")
-
-  cmd <- call_system(file.path(R.home("bin"), "R"),
-                     c("--vanilla", "CMD", "build", opts, basename(path)))
-  normalizePath(dest, mustWork = TRUE)
-}

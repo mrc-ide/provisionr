@@ -116,23 +116,12 @@ github_build_package <- function(x) {
   pkg <- download_file(x$url_package, keep_ext = TRUE)
   unzip(pkg, exdir = tmp)
   file.remove(pkg)
-  target <- dir(tmp, full.names = TRUE)
+  unpacked <- target <- dir(tmp, full.names = TRUE)
+  on.exit(unlink(unpacked, recursive = TRUE))
   if (!is.null(x$subdir)) {
     target <- file.path(target, subdir)
   }
-  R_build(target)
-}
-
-## TODO: bunch of duplication with build_package (in install.R)
-R_build <- function(path) {
-  owd <- setwd(dirname(path))
-  on.exit(setwd(owd))
-  prev <- dir(full.names = TRUE)
-  opts <- "--no-build-vignettes"
-  cmd <- call_r(c("--vanilla", "CMD", "build", opts, basename(path)))
-  ## The normalizePath here should not be needed according to ?dir
-  ## (with full.names = TRUE) but it does seem to be which is sad.
-  normalizePath(setdiff(dir(full.names = TRUE), prev))
+  build_package(target, dest = tmp)
 }
 
 github_url_zip <- function(x) {
@@ -169,7 +158,7 @@ download_package <- function(x) {
       ## things have changed when they have not really.  I'll consider
       ## writing something to hash a directory that we can use to
       ## check to see if it's worth rebuilding the package.
-      pkg <- build_package(x$url_package)
+      pkg <- build_package(x$url_package, dest = tempfile())
     } else {
       pkg <- x$url_package
     }
@@ -233,4 +222,35 @@ split_spec <- function(x) {
   stopifnot(all(grepl(re, x)))
   cbind(type = sub(re, "\\1", x),
         value = sub(re, "\\2", x))
+}
+
+build_package <- function(path, vignettes = FALSE, manual = FALSE,
+                          dest = dirname(path)) {
+  if (!file.exists(dest)) {
+    dir.create(dest, FALSE, TRUE)
+  } else if (!is_directory(dest)) {
+    stop("If it exists already, 'dest' must be a directory")
+  }
+
+  desc <- file.path(path, "DESCRIPTION")
+  if (!file.exists(desc)) {
+    stop("Did not find a valid package at ", path)
+  }
+  path_abs <- normalizePath(path, mustWork = TRUE)
+
+  dat <- read.dcf(desc, c("Package", "Version"))
+  dest_pkg <- sprintf("%s_%s.tar.gz", dat[, "Package"], dat[, "Version"])
+
+  if (dest != ".") {
+    owd <- setwd(dest)
+    on.exit(setwd(owd))
+  }
+
+  opts <- c(character(0),
+            if (!vignettes) "--no-build-vignettes",
+            if (!manual) "--no-manual")
+
+  cmd <- call_system(file.path(R.home("bin"), "R"),
+                     c("--vanilla", "CMD", "build", opts, path_abs))
+  normalizePath(file.path(dest, dest_pkg), mustWork = TRUE)
 }
