@@ -5,3 +5,4 @@ TODO.md
 tests/testthat/clone_cran.R
 tests/testthat/local_cran
 tests/testthat/local_cran.tar.gz
+provisionr_*.tar.gz

@@ -119,7 +119,7 @@ github_build_package <- function(x) {
   unpacked <- target <- dir(tmp, full.names = TRUE)
   on.exit(unlink(unpacked, recursive = TRUE))
   if (!is.null(x$subdir)) {
-    target <- file.path(target, subdir)
+    target <- file.path(target, x$subdir)
   }
   build_package(target, dest = tmp)
 }

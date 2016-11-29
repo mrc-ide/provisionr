@@ -11,13 +11,12 @@
 ##'
 ##' @param platform The platform to create the library for.  If
 ##'   \code{NULL} then we build for the current platform (using
-##'   \code{\link{install_packages}} if \code{version} is \code{NULL}
-##'   or compatible with our current version).  Otherwise this can be
-##'   one of \code{"windows"}, \code{"macosx"},
-##'   \code{"macosx/mavericks"} or \code{"linux"}, correspinding to
-##'   the different directories that binaries live in (in the case of
-##'   \code{"linux"} there are no binaries and things are a little
-##'   more complicated).
+##'   \code{install_packages} if \code{version} is \code{NULL} or
+##'   compatible with our current version).  Otherwise this can be one
+##'   of \code{"windows"}, \code{"macosx"}, \code{"macosx/mavericks"}
+##'   or \code{"linux"}, correspinding to the different directories
+##'   that binaries live in (in the case of \code{"linux"} there are
+##'   no binaries and things are a little more complicated).
 ##'
 ##' @param version The version of R to install packages for.  By
 ##'   default, we use the same version (major.minor) as the current
@@ -47,12 +46,17 @@
 ##'   any package that is already installed).
 ##'
 ##' @param allow_missing For cross-installation (via
-##'   \code{\link{cross_install}} when \code{platform} is
-##'   non-\code{NULL}), allow packages to be missing that need to be
-##'   compiled?  The interface here is going to change a bunch, so
-##'   watch out...
+##'   \code{cross_install} when \code{platform} is non-\code{NULL}),
+##'   allow packages to be missing that need to be compiled?  The
+##'   interface here is going to change a bunch, so watch out...
 ##'
 ##' @export
+##'
+##' @importFrom stats na.omit setNames
+##'
+##' @importFrom utils available.packages capture.output download.file
+##'   installed.packages untar unzip
+##'
 ##' @author Rich FitzJohn
 provision_library <- function(packages, lib,
                               platform = NULL, version = NULL,

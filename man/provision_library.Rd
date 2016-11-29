@@ -16,13 +16,12 @@ created.}
 
 \item{platform}{The platform to create the library for.  If
 \code{NULL} then we build for the current platform (using
-\code{\link{install_packages}} if \code{version} is \code{NULL}
-or compatible with our current version).  Otherwise this can be
-one of \code{"windows"}, \code{"macosx"},
-\code{"macosx/mavericks"} or \code{"linux"}, correspinding to
-the different directories that binaries live in (in the case of
-\code{"linux"} there are no binaries and things are a little
-more complicated).}
+\code{install_packages} if \code{version} is \code{NULL} or
+compatible with our current version).  Otherwise this can be one
+of \code{"windows"}, \code{"macosx"}, \code{"macosx/mavericks"}
+or \code{"linux"}, correspinding to the different directories
+that binaries live in (in the case of \code{"linux"} there are
+no binaries and things are a little more complicated).}
 
 \item{version}{The version of R to install packages for.  By
 default, we use the same version (major.minor) as the current
@@ -52,10 +51,9 @@ their dependencies) and \code{"skip"} (do not install or upgrade
 any package that is already installed).}
 
 \item{allow_missing}{For cross-installation (via
-\code{\link{cross_install}} when \code{platform} is
-non-\code{NULL}), allow packages to be missing that need to be
-compiled?  The interface here is going to change a bunch, so
-watch out...}
+\code{cross_install} when \code{platform} is non-\code{NULL}),
+allow packages to be missing that need to be compiled?  The
+interface here is going to change a bunch, so watch out...}
 }
 \description{
 Create or update a library of packages.

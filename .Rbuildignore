@@ -4,3 +4,4 @@
 ^Makefile$
 ^TODO\.md$
 ^notes\.md$
+^provisionr_.*\.tar\.gz$

@@ -1,3 +1,24 @@
+##' Collect information on package sources
+##' @title Collect information on package sources
+##'
+##' @param cran A single URL for the CRAN repo to use.  If
+##'   \code{NULL}, then this will use the rstudio mirror.
+##'
+##' @param repos A character vector of additional repositories to use.
+##'   Repositories of the form \code{drat://username} will be
+##'   translated to a drat repository hosted on github (e.g.,
+##'   \code{https://username.github.io/drat})
+##'
+##' @param github A vector of github package specifications (e.g.,
+##'   username/password).  The full syntax as implemented in
+##'   \code{\link{parse_github_repo_spec}} is supported (packages in
+##'   subdirectories, or referencing a particular branch, commit or
+##'   tag).
+##'
+##' @param local A character vector of local files to include.  Can be
+##'   directories or built packages (source or binary)
+##'
+##' @export
 package_sources <- function(cran = NULL, repos = NULL,
                             github = NULL, local = NULL) {
   if (is.null(cran)) {
@@ -7,6 +28,7 @@ package_sources <- function(cran = NULL, repos = NULL,
   }
 
   if (!is.null(repos)) {
+    assert_character(repos)
     names(repos) <- repos
     is_drat <- grepl("^drat://", repos)
     repos[is_drat] <- sprintf("https://%s.github.io/drat/",
