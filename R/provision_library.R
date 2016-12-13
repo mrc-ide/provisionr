@@ -4,6 +4,7 @@
 ##' up with a way of making that work nicely.
 ##'
 ##' @title Create or update a library
+##'
 ##' @param packages A character vector of packages to include
 ##'
 ##' @param lib A path to the library; if it does not exist, it will be

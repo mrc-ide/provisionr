@@ -48,6 +48,17 @@ test_that("binary cross install with deps", {
   expect_equal(sort(q3$packages), sort(c(p3$packages, "openssl")))
   q4 <- cross_install_plan("httr", db, lib, "replace")
   expect_equal(q4, p4)
+
+  ## And again, with the next package up:
+  r1 <- cross_install_plan("devtools", db, lib, "skip")
+  expect_equal(r1, p1)
+  r2 <- cross_install_plan("devtools", db, lib, "upgrade")
+  expect_equal(r2, p2)
+  r3 <- cross_install_plan("devtools", db, lib, "upgrade_all")
+  expect_equal(r3, q3)
+  r4 <- cross_install_plan("devtools", db, lib, "replace")
+  expect_gt(length(r4$packages), length(p4$packages))
+  expect_true(all(p4$packages %in% r4$packages))
 })
 
 test_that("cross install source package", {
@@ -71,6 +82,40 @@ test_that("cross install package that triggers load", {
   provision_library("lazyproblem", path, platform = "windows", src = drat)
   pkgs <- .packages(TRUE, path)
   expect_equal(sort(pkgs), sort(c("deSolve", "lazyproblem")))
+})
+
+test_that("installed_action", {
+  lib <- tempfile()
+
+  msgs <- capture_messages(
+    provision_library("ape", lib, platform = "windows"))
+  expect_true(any(grepl("cross", msgs)))
+  expect_equal(dir(lib), "ape")
+
+  ## Skip reinstallation:
+  msgs <- capture_messages(
+    provision_library("ape", lib, platform = "windows",
+                      installed_action = "skip"))
+  expect_false(any(grepl("cross", msgs)))
+
+  ## Upgrade (but don't)
+  msgs <- capture_messages(
+    provision_library("ape", lib, platform = "windows",
+                      installed_action = "upgrade"))
+  expect_false(any(grepl("cross", msgs)))
+
+  ## Upgrade (but do) -- this does not work!
+  alter_package_version(file.path(lib, "ape"), FALSE)
+  msgs <- capture_messages(
+    provision_library("ape", lib, platform = "windows",
+                      installed_action = "upgrade"))
+  expect_true(any(grepl("cross", msgs)))
+
+  ## Replace:
+  msgs <- capture_messages(
+    provision_library("ape", lib, platform = "windows",
+                      installed_action = "replace"))
+  expect_true(any(grepl("cross", msgs)))
 })
 
 test_that("missing compiled packages", {

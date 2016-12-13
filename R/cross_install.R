@@ -172,33 +172,23 @@ cross_install_plan <- function(packages, db, lib, installed_action) {
                  paste(msg, collapse=", ")))
   }
 
-  if (installed_action == "upgrade") {
+  if (installed_action == "skip") {
     packages <- setdiff(packages, .packages(TRUE, lib))
   }
 
   binary <- packages %in% rownames(db$bin)
 
   if (installed_action == "upgrade" || installed_action == "upgrade_all") {
-    check <- intersect(packages, .packages(TRUE, lib))
-    v_installed <- setNames(numeric_version(vcapply(
-      file.path(lib, check, "DESCRIPTION"), read.dcf, "Version")), check)
-
-    v_db <- setNames(character(length(check)), check)
-    i <- match(check, packages)
-    j <- binary[i]
-    v_db[j] <- db$bin[check[j], "Version"]
-    v_db[!j] <- db$src[check[!j], "Version"]
-    v_db <- numeric_version(v_db)
-
-    current <- v_installed >= v_db
-    drop <- i[current]
-    if (length(drop) > 0L) {
-      packages <- packages[-drop]
-      binary <- binary[-drop]
+    if (installed_action == "upgrade") {
+      check <- union(setdiff(packages, .packages(TRUE, lib)), requested)
+    } else {
+      check <- packages
     }
+    packages <- check_version(check, lib, db)
   }
 
   compile <- rep_len(FALSE, length(packages))
+  binary <- packages %in% rownames(db$bin)
   if (any(!binary)) {
     j <- match(packages[!binary], db$src[, "Package"])
     compile[!binary] <- db$src[j, "NeedsCompilation"] == "yes"
@@ -229,6 +219,10 @@ cross_install_package <- function(package, lib, binary, db) {
     download_file(url, destfile = path)
   }
 
+  dest <- file.path(lib, x$Package)
+  if (file.exists(dest)) {
+    unlink(dest, recursive = TRUE)
+  }
   if (binary) {
     unzip(path, exdir = lib)
   } else {
@@ -253,7 +247,7 @@ cross_install_package <- function(package, lib, binary, db) {
               paste0("--library=", shQuote(normalizePath(lib_tmp, "/"))),
               shQuote(normalizePath(path)))
     call_system(file.path(R.home(), "bin", "R"), args, env = env)
-    file.rename(file.path(lib_tmp, x$Package), file.path(lib, x$Package))
+    file.rename(file.path(lib_tmp, x$Package), dest)
   }
 
   invisible(TRUE)
@@ -269,4 +263,21 @@ drat_ensure_PACKAGES <- function(path) {
 
 valid_platforms <- function() {
   c("windows", "macosx", "macosx/mavericks", "linux")
+}
+
+check_version <- function(packages, lib, db) {
+  installed <- packages %in% .packages(TRUE, lib)
+  if (any(installed)) {
+    check <- packages[installed]
+    v_installed <- setNames(numeric_version(
+      vcapply(file.path(lib, check, "DESCRIPTION"), read.dcf, "Version")),
+      check)
+    binary <- check %in% rownames(db$bin)
+    v_db <- setNames(character(length(check)), check)
+    v_db[binary] <- db$bin[check[binary], "Version"]
+    v_db[!binary] <- db$src[check[!binary], "Version"]
+    v_db <- numeric_version(v_db)
+    installed[installed] <- v_installed >= v_db
+  }
+  packages[!installed]
 }
