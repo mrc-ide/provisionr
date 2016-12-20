@@ -45,14 +45,10 @@ install_packages <- function(packages, lib = NULL, ...,
   install_packages2(packages, lib, ..., error = error, quiet = TRUE)
 }
 
-install_packages_missing <- function(packages, lib = NULL, ...) {
-  install_packages(setdiff(packages, .packages(TRUE, lib)), lib, ...)
-}
-
 default_lib <- function(lib) {
   if (is.null(lib)) {
     lib <- .libPaths()[[1L]]
-  } else if (length(lib) > 1) {
+  } else if (length(lib) > 1L) {
     lib <- lib[[1L]]
   }
   lib
@@ -91,29 +87,4 @@ install_packages2 <- function(pkgs, ..., error = TRUE) {
   if (!is.null(e)) {
     stop(e$message, call. = FALSE)
   }
-}
-
-
-## A possibility:
-context_repos <- function(sources) {
-  ## This attempts to avoid listing CRAN twice which makes
-  ## available.packages quite slow.
-  r <- getOption("repos")
-  r <- r[r != sources$cran]
-  r["CRAN"] <- sources$cran
-  if (!is.null(sources$repos)) {
-    r <- c(r, sources$repos)
-  }
-  ## TODO: The dealing with local_drat here is broken; it does not
-  ## come out of package_sources() correctly (i.e., is not set).  This
-  ## is because the context_read sets the sources generally and this
-  ## function does not know about that.
-  ##
-  ## The resolution needs to be that this function should not take
-  ## sources but instead take arguments 'cran' and 'repos'.
-  if (!is.null(sources$local_drat)) {
-    drat_add_empty_bin(contrib.url(sources$local_drat, "binary"))
-    r <- c(r, "local_drat"=file_url(sources$local_drat))
-  }
-  r
 }

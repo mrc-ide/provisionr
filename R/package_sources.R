@@ -46,14 +46,15 @@ package_sources <- function(cran = NULL, repos = NULL,
     tmp <- lapply(github, parse_remote)
     err <- vcapply(tmp, "[[", "type") != "github"
     if (any(err)) {
-      stop("Non-github spec ", paste(github[err], collpse = ", "))
+      stop("Non-github spec ", paste(github[err], collapse = ", "))
     }
     spec <- c(spec, vcapply(tmp, "[[", "spec"))
   }
 
   if (!is.null(local)) {
     if (!all(file.exists(local))) {
-      stop("Missing local files")
+      stop("Missing local files: ",
+           paste(local[!file.exists(local)], collapse = ", "))
     }
     spec <- c(spec, paste0("local::", local))
   }

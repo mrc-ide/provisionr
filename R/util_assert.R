@@ -34,18 +34,6 @@ assert_scalar_character <- function(x, name=deparse(substitute(x))) {
   assert_nonmissing(x, name)
 }
 
-assert_numeric <- function(x, name=deparse(substitute(x))) {
-  if (!is.numeric(x)) {
-    stop(sprintf("%s must be numeric", name), call.=FALSE)
-  }
-}
-
-assert_scalar_numeric <- function(x, name=deparse(substitute(x))) {
-  assert_scalar(x, name)
-  assert_numeric(x, name)
-  assert_nonmissing(x, name)
-}
-
 match_value <- function(x, choices, name=deparse(substitute(x))) {
   assert_scalar_character(x, name)
   i <- match(x, choices)

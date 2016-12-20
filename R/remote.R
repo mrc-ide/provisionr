@@ -168,35 +168,8 @@ download_package <- function(x) {
   pkg
 }
 
-remote_url <- function(type, x) {
-  switch(type,
-         github = remote_url_host(x, "github.com"),
-         bitbucket = remote_url_host(x, "bitbucket.com"),
-         url = x,
-         stop("Can't convert type ", type))
-}
-
-remote_url_host <- function(x, host) {
-  p <- remotes::parse_github_repo_spec(x)
-  ret <- sprintf("https://%s/%s/%s", host, p$user, p$repo)
-  if (!is.null(p$pull)) {
-    ret <- file.path(ret, "pulls", p$pull)
-  } else {
-    ret <- file.path(ret, "tree", p$ref %||% "master")
-  }
-  if (!is.null(p$subdir)) {
-    ret <- file.path(p$subdir)
-  }
-  ret
-}
-
 drat_repo_init <- function(path) {
   dir.create(file.path(path, "src", "contrib"), FALSE, TRUE)
-}
-
-drat_insert_package <- function(package, path) {
-  is_zip <-
-  drat::insertPackage(package, path)
 }
 
 extract_DESCRIPTION <- function(filename) {
@@ -250,7 +223,6 @@ build_package <- function(path, vignettes = FALSE, manual = FALSE,
             if (!vignettes) "--no-build-vignettes",
             if (!manual) "--no-manual")
 
-  cmd <- call_system(file.path(R.home("bin"), "R"),
-                     c("--vanilla", "CMD", "build", opts, path_abs))
+  cmd <- call_r(c("--vanilla", "CMD", "build", opts, path_abs))
   normalizePath(file.path(dest, dest_pkg), mustWork = TRUE)
 }

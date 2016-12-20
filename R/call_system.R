@@ -4,7 +4,7 @@
 call_system <- function(command, args, env = character(), max_lines = 20,
                         p = 0.8) {
   res <- suppressWarnings(system2(command, args,
-                                  env=env, stdout=TRUE, stderr=TRUE))
+                                  env = env, stdout = TRUE, stderr = TRUE))
   ok <- attr(res, "status")
   if (!is.null(ok) && ok != 0) {
     max_nc <- getOption("warning.length")
@@ -15,7 +15,7 @@ call_system <- function(command, args, env = character(), max_lines = 20,
     if (!is.null(errmsg)) {
       msg <- c(msg, sprintf("%s\nerrmsg: %s", errmsg))
     }
-    sep <- paste(rep("-", getOption("width")), collapse="")
+    sep <- paste(rep("-", getOption("width")), collapse = "")
 
     ## Truncate message:
     if (length(res) > max_lines) {
@@ -30,7 +30,7 @@ call_system <- function(command, args, env = character(), max_lines = 20,
     i <- max(1, which(cumsum(rev(nchar(res) + 1L)) < (max_nc - nc)))
     res <- res[(length(res) - i + 1L):length(res)]
     msg <- c(msg, "Program output:", sep, res, sep)
-    stop(paste(msg, collapse="\n"))
+    stop(paste(msg, collapse = "\n"))
   }
   invisible(res)
 }

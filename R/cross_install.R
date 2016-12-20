@@ -218,7 +218,7 @@ cross_install_package <- function(package, lib, binary, db) {
     args <- c("CMD", "INSTALL", "--no-test-load",
               paste0("--library=", shQuote(normalizePath(lib_tmp, "/"))),
               shQuote(normalizePath(path)))
-    call_system(file.path(R.home(), "bin", "R"), args, env = env)
+    call_r(args, env = env)
     file.rename(file.path(lib_tmp, x$Package), dest)
   }
 

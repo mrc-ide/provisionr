@@ -1,11 +1,3 @@
-file_unurl <- function(url) {
-  if (is_windows()) {
-    sub("^file:///", "", url)
-  } else {
-    sub("^file://", "", url)
-  }
-}
-
 is_windows <- function() {
   Sys.info()[["sysname"]] == "Windows"
 }

@@ -26,10 +26,10 @@ test_that("r_version_str", {
 
 test_that("file_unurl", {
   testthat::with_mock(
-    is_windows = function() FALSE,
+    "provisionr::is_windows" = function() FALSE,
     expect_equal(file_unurl("file:///usr/local"), "/usr/local"))
   testthat::with_mock(
-    is_windows = function() TRUE,
+    "provisionr::is_windows" = function() TRUE,
     expect_equal(file_unurl("file:///c:/foo"), "c:/foo"))
 })
 
