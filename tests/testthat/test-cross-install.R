@@ -151,3 +151,25 @@ test_that("prefer drat files", {
   expect_equal(rownames(ans$missing), "ape")
   expect_equal(dir(path), character(0))
 })
+
+test_that("don't cross install locally", {
+  expect_error(cross_install_packages("ape", .libPaths()[[1]]),
+               "Do not use cross_install_packages to install into current")
+})
+
+test_that("missing packages", {
+  lib <- tempfile()
+  db <- available_packages("https://cran.rstudio.com", "windows", NULL)
+
+  expect_error(cross_install_plan("foobar", db, lib, "skip"),
+               "Can't find installation candidate for: foobar")
+
+  ## Filter some dependencies off of my lists:
+  db2 <- db
+  for (i in c("bin", "src", "all")) {
+    db2[[i]] <- db2[[i]][rownames(db2[[i]]) != "curl", , drop = FALSE]
+  }
+
+  expect_error(cross_install_plan("httr", db2, lib, "skip"),
+               "Can't find installation candidate for dependencies: curl")
+})

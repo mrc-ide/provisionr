@@ -36,29 +36,6 @@ base_packages <- function() {
   rownames(installed.packages(priority = c("base", "recommended")))
 }
 
-check_r_version <- function(version) {
-  if (is.null(version)) {
-    version <- getRversion()
-  } else if (is.character(version)) {
-    version <- numeric_version(version)
-  } else if (!inherits(version, "numeric_version")) {
-    stop("Invalid type for version")
-  }
-  if (length(version) != 1L) {
-    stop("Expected a single version for version")
-  }
-  version
-}
-
-r_version_str <- function(version, n = 2L) {
-  v <- unclass(check_r_version(version))[[1]]
-  v <- unclass(version)[[1]]
-  if (length(v) < n) {
-    stop("Unexpected version length")
-  }
-  paste(v[seq_len(n)], collapse = ".")
-}
-
 recursive_deps <- function(x, db) {
   done <- character()
   base <- base_packages()
@@ -73,18 +50,13 @@ recursive_deps <- function(x, db) {
   sort(unique(done))
 }
 
-lib_package_version <- function(package, lib) {
-  path <- file.path(lib, package, "DESCRIPTION")
-  if (file.exists(path)) {
-    package_version(read.dcf(path, fields = "Version"))
-  } else {
-    NA
-  }
-}
-
 ## TODO: memoise this because it's quite slow
 available_packages <- function(repos, platform, version) {
   provisionr_log("download", "package database")
+
+  if (!is.null(platform)) {
+    platform <- match_value(platform, valid_platforms())
+  }
 
   is_local <- grepl("^(/|file://)", repos)
   if (any(is_local)) {
