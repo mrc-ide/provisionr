@@ -1,12 +1,18 @@
 context("install")
 
 test_that("throw on unavailable package", {
-  expect_error(suppressWarnings(install_packages("nosuchpackage")),
-               "is not available")
-  expect_warning(install_packages("nosuchpackage", error = FALSE),
-               "is not available")
+  lib <- NULL
+  repos <- sanitise_options_cran()
+  path <- tempfile()
+  expect_error(suppressWarnings(
+    install_packages("nosuchpackage", lib, repos)),
+    "is not available")
+  expect_warning(
+    install_packages("nosuchpackage", lib, repos, error = FALSE),
+    "is not available")
   expect_error(
-    suppressWarnings(install_packages("nosuchpackage", error = FALSE)),
+    suppressWarnings(
+      install_packages("nosuchpackage", lib, repos, error = FALSE)),
     NA)
 })
 
@@ -14,7 +20,7 @@ test_that("throw on broken package", {
   pkg <- build_package("broken")
   on.exit(file.remove(pkg))
   expect_error(suppressWarnings(
-    install_packages(pkg, repos = NULL, error = TRUE)),
+    install_packages(pkg, NULL, NULL, error = TRUE)),
     "had non-zero exit status")
 })
 
@@ -29,4 +35,9 @@ test_that("default_lib", {
   p2 <- tempfile()
   expect_equal(default_lib(p1), p1)
   expect_equal(default_lib(c(p1, p2)), p1)
+})
+
+test_that("sanitise_options_cran", {
+  expect_equal(with_repos("@CRAN@", sanitise_options_cran()),
+               "https://cran.rstudio.com")
 })

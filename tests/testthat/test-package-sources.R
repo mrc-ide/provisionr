@@ -2,7 +2,7 @@ context("package_sources")
 
 test_that("defaults", {
   src <- package_sources()
-  expect_equal(src$cran, "https://cran.rstudio.com")
+  expect_equal(src$cran, sanitise_options_cran())
   expect_null(src$repos)
   expect_null(src$spec)
 })
@@ -24,27 +24,47 @@ test_that("local", {
                "Missing local files")
 })
 
-test_that("build", {
+test_that("build (local)", {
+  src <- package_sources(local = "hello")
+  expect_null(src$local_drat)
+
+  tmp <- tempfile()
+  expect_true(src$needs_build())
+  ret <- src$build(tmp)
+  expect_identical(ret, src)
+  expect_equal(ret$local_drat, tmp)
+  expect_true(file.exists(ret$local_drat))
+
+  path <- file.path(ret$local_drat, "src", "contrib")
+  pkgs <- read.dcf(file.path(path, "PACKAGES"))
+  expect_equal(unname(pkgs[, "Package"]), "hello")
+
+  dat <- drat_storr(ret$local_drat)$get(src$spec)
+  tgz <- file.path(path, dat$tgz)
+  expect_true(file.exists(tgz))
+  expect_equal(unname(tools::md5sum(tgz)), dat$md5)
+  expect_equal(dat$Package, "hello")
+})
+
+test_that("build (github)", {
   src <- package_sources(github = "richfitz/kitten")
+  expect_null(src$local_drat)
+
   tmp <- tempfile()
   ret <- src$build(tmp)
-  expect_is(ret, "local_drat")
-  expect_true(file.exists(tmp))
-  path <- file.path(tmp, "src", "contrib")
-  expect_true(file.exists(file.path(path, "PACKAGES")))
+  expect_identical(ret, src)
+  expect_equal(ret$local_drat, tmp)
+  expect_true(file.exists(ret$local_drat))
+
+  path <- file.path(ret$local_drat, "src", "contrib")
   pkgs <- read.dcf(file.path(path, "PACKAGES"))
   expect_equal(unname(pkgs[, "Package"]), "kitten")
 
-  spec <- "github::richfitz/kitten"
-  expect_equal(ret$db$list(), spec)
-  dat <- ret$db$get(spec)
+  dat <- drat_storr(ret$local_drat)$get(src$spec)
   tgz <- file.path(path, dat$tgz)
   expect_true(file.exists(tgz))
   expect_equal(unname(tools::md5sum(tgz)), dat$md5)
   expect_equal(dat$Package, "kitten")
-
-  expect_equal(ret$src, src)
-  expect_equal(ret$path, tmp)
 })
 
 test_that("supplied cran", {
@@ -83,7 +103,32 @@ test_that("print", {
   x <- package_sources(local = "hello")
   expect_match(as.character(x), "<package_sources>", fixed = TRUE, all = FALSE)
   expect_output(print(x), "<package_sources>", fixed = TRUE)
+  expect_output(print(x), "drat: <pending build>")
   y <- x$build(tempfile())
-  expect_match(as.character(y), "<local_drat>", fixed = TRUE, all = FALSE)
-  expect_output(print(y), "<local_drat>", fixed = TRUE)
+  expect_match(as.character(y), "<package_sources>", fixed = TRUE, all = FALSE)
+  expect_output(print(x), paste("path:", tempdir()), fixed = TRUE)
 })
+
+test_that("prepare_repos", {
+  expect_equal(prepare_repos(NULL), sanitise_options_cran())
+  src <- package_sources()
+  expect_equal(prepare_repos(src), src$cran)
+
+  src <- package_sources(repos = "https://foo.com")
+  expect_equal(prepare_repos(src), c(src$repos, src$cran))
+
+  src <- package_sources(repos = "https://foo.com", local = "hello")
+  dat <- src$build(tempfile())
+  expect_equal(unname(prepare_repos(dat)),
+               unname(c(file_url(dat$local_drat), dat$repos,
+                        sanitise_options_cran())))
+})
+
+test_that("prepare_package_sources", {
+})
+
+## fails because the github parse fails:
+## x <- package_sources(github = "hello")$build(tempfile())
+
+## make sure that we parse things properly on entry and then this is
+## not a problem.  Same with the local file presence issue.

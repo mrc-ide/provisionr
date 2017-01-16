@@ -41,3 +41,18 @@ test_that("cross, multiple packages", {
   expect_true("progress" %in% dir(lib))
   expect_gt(length(dir(lib)), 1)
 })
+
+test_that("use package sources - transient drat", {
+  lib <- tempfile()
+  src <- package_sources(local = "hello")
+  res <- provision_library("hello", lib, src = src)
+  expect_equal(dir(lib), "hello")
+})
+
+test_that("use package sources - persistent drat", {
+  lib <- tempfile()
+  drat <- tempfile()
+  src <- package_sources(github = "richfitz/kitten")
+  res <- provision_library("kitten", lib, src = src, path_drat = drat)
+
+})

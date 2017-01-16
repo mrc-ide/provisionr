@@ -23,9 +23,12 @@ test_that("directory", {
   src <- package_sources(local = hello)
   ans <- src$build(tempfile())
 
-  k <- ans$db$list()
+  ## TODO: this might be nicer if it dispatched appropriately for
+  ## package_sources objects?
+  db <- drat_storr(ans$local_drat)
+  k <- db$list()
   expect_equal(k, paste0("local::", hello))
-  expect_equal(ans$db$get(k)$Package, "hello")
+  expect_equal(db$get(k)$Package, "hello")
 })
 
 test_that("tarball", {
@@ -38,9 +41,10 @@ test_that("tarball", {
   src <- package_sources(local = pkg)
   ans <- src$build(tempfile())
 
-  k <- ans$db$list()
+  db <- drat_storr(ans$local_drat)
+  k <- db$list()
   expect_equal(k, paste0("local::", pkg))
-  expect_equal(ans$db$get(k)$Package, "hello")
+  expect_equal(db$get(k)$Package, "hello")
 })
 
 test_that("update", {
@@ -50,21 +54,27 @@ test_that("update", {
   hello <- file.path(path, "hello")
 
   src <- package_sources(local = hello)
+  expect_true(src$needs_build())
+
   tmp <- tempfile()
-  expect_message(dat <- src$build(tmp), "drat")
+  expect_message(src$build(tmp), "drat")
+  expect_false(src$needs_build())
+
   expect_silent(src$build(tmp))
 
   ## Now, we update the package:
   v <- alter_package_version(hello, increase = TRUE)
   expect_silent(src$build(tmp))
   expect_message(dat <- src$build(tmp, TRUE), "drat")
-  expect_equal(dat$db$get(dat$db$list())$Version, as.character(v))
+  db <- drat_storr(dat$local_drat)
+  expect_equal(db$get(db$list())$Version, as.character(v))
 })
 
 test_that("binary package", {
   tmp <- tempfile()
   dir.create(tmp)
-  url <- contrib_url(getOption("repos")[[1]], "windows", NULL)
+
+  url <- contrib_url(sanitise_options_cran()[[1]], "windows", NULL)
   res <- download.packages("ape", tmp, contriburl = url, type = "win.binary")
   pkg <- res[[2]]
 

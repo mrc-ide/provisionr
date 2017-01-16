@@ -25,8 +25,10 @@
 ##'   as a string or \code{numeric_version} object.
 ##'
 ##' @param src An optional description of additional packages, using
-##'   \code{\link{package_sources}} (can be either a
-##'   \code{package_sources} object or a \code{local_drat} object).
+##'   \code{\link{package_sources}}.  It will only be rebuilt
+##'   (fetching packages) if it has \emph{never} been built, or of
+##'   packages listed in the \code{spec} element are not found in the
+##'   repository.
 ##'
 ##' @param path_drat When using a \code{package_sources} object for
 ##'   \code{src}, the path to store the drat repository.  If not
@@ -63,19 +65,10 @@ provision_library <- function(packages, lib,
                               platform = NULL, version = NULL,
                               src = NULL, path_drat = NULL,
                               check_dependencies = TRUE,
-                              installed_action = "replace",
+                              installed_action = "upgrade",
                               allow_missing = FALSE) {
   assert_scalar_character(lib)
   assert_scalar_logical(check_dependencies)
-
-  dir.create(lib, FALSE, TRUE)
-  ## Options for installed_action will be:
-  ##
-  ## * skip: filter out and skip over installed packages
-  ## * upgrade: upgrade packages that are out of date
-  ## * upgrade_all: as for upgrade, but also for packages that are
-  ##   not *directly* required.
-  ## * replace: reinstall packages
   installed_action <-
     match_value(installed_action,
                 c("replace", "upgrade_all", "upgrade", "skip"))
@@ -84,75 +77,45 @@ provision_library <- function(packages, lib,
   ## and version as a self install
   self <- is.null(platform) && is.null(version)
 
-  ## TODO: filter all this shit out into its own little function, I
-  ## think.  That way I can check it more easily in atest.  It's
-  ## really something that applies only in cross installation where we
-  ## have a local drat.  In which case we can probably pass the src
-  ## object into the plan and save all this!
-  db <- NULL
-  if (!is.null(src)) {
-    if (inherits(src, "package_sources")) {
-      if (is.null(path_drat)) {
-        path_drat <- tempfile()
-        on.exit(unlink(path_drat, recursive = TRUE))
-      } else {
-        assert_scalar_character(path_drat)
-      }
-      src <- src$build(path_drat)
-    }
-    if (!inherits(src, "local_drat")) {
-      stop("Invalid input for src")
-    }
-    ## Repos are ordered from highest to lowest priority:
-    repos <- c(src$path, src$src$repos, src$src$cran)
-    db <- available_packages(repos, platform, version)
-
-    ## Filter off the binaries for anything listed in the drat repo:
-    special <- unname(
-      read.dcf(file.path(contrib_url(src$path, "src", NULL), "PACKAGES"),
-               "Package")[, "Package"])
-    i <- which(rownames(db$bin) %in% special)
-    drop <- i[db$bin[i, "Repository"] != file_url(src$path)]
-    if (length(drop) > 0L) {
-      db$bin <- db$bin[-i, , drop = FALSE]
-      if (self) {
-        warning("It's highly likely that this is not going to work as expected")
-      }
-    }
-  } else {
-    ## TODO: this is not going to be *quite* enough to deal with the
-    ## dreaded "not setting CRAN" clusterfuck.
-    repos <- getOption("repos", "https://cran.rstudio.com")
-    ## TODO: until install_packages can deal with the db here, it's
-    ## not being included.  I have no idea how it rationalises the
-    ## difference between binary and source installs.  Soon I'll pull
-    ## it regardless, I think, because then I can throw it at
-    ## check_library to get the full set of recursive dependencies.
-    ## Basically, trying to understand how "both" works is the trick
-    ## here.
-    if (!self) {
-      db <- available_packages(repos, platform, version)
-    }
+  src <- prepare_package_sources(src, path_drat)
+  if (!is.null(src$local_drat) && is.null(path_drat)) {
+    on.exit(unlink(src$local_drat, recursive = TRUE))
   }
+  repos <- prepare_repos(src)
 
-  if (check_dependencies) {
-    dat <- check_library(packages, lib)
-    packages <- union(packages, dat$missing)
-  }
-
+  dir.create(lib, FALSE, TRUE)
   if (self) {
-    res <- with_repos(repos,
-                      install_packages(packages, lib, standalone = TRUE,
-                                       installed_action = installed_action))
+    ## TODO: deal with the case where there are source packages in the
+    ## drat that need compilation, if those occur upstream.  Though I
+    ## think that install.packages will actually do a decent job here.
+    ## It'd be easy enough to check by downloading a source CRAN
+    ## package, updating the version number, adding to the drat and
+    ## seeing what happens.  Needs testing on OSX/Windows though.
+    ##
+    ## TODO: this could be done more simply by passing repos through I
+    ## think.
+    res <- install_packages(packages, lib, repos,
+                            standalone = check_dependencies,
+                            installed_action = installed_action)
   } else {
+    db <- available_packages(repos, platform, version)
+    if (!is.null(src)) {
+      special <- unname(
+        read.dcf(file.path(contrib_url(src$local_drat, "src", NULL),
+                           "PACKAGES"), "Package")[, "Package"])
+      i <- which(rownames(db$bin) %in% special)
+      drop <- i[db$bin[i, "Repository"] != file_url(src$local_drat)]
+      if (length(drop) > 0L) {
+        db$bin <- db$bin[-i, , drop = FALSE]
+      }
+    }
     res <- with_repos(repos,
                       cross_install_packages(
                         packages, lib, db,
                         installed_action = installed_action,
                         allow_missing = allow_missing))
   }
-
-  ## TODO: should report on what was installed perhaps?  We're going to need to
+  res
 }
 
 with_repos <- function(repos, expr) {
@@ -183,4 +146,37 @@ check_library <- function(packages, lib) {
   }
 
   list(found = found, missing = missing)
+}
+
+prepare_repos <- function(src) {
+  ## This attempts to avoid listing CRAN twice which makes
+  ## available.packages quite slow.
+  if (is.null(src$cran)) {
+    r <- sanitise_options_cran()
+  } else {
+    r <- c(src$cran)
+  }
+
+  ## Repos are ordered from highest to lowest priority;
+  ## * local
+  ## * provided repos
+  ## * cran
+  if (!is.null(src$repos)) {
+    r <- c(src$repos, r) # consider union()?
+  }
+
+  if (!is.null(src$local_drat)) {
+    drat_add_empty_bin(contrib.url(src$local_drat, "binary"))
+    r <- c("drat" = file_url(src$local_drat), r)
+  }
+
+  r
+}
+
+sanitise_options_cran <- function() {
+  r <- getOption("repos", "https://cran.rstudio.com")
+  if ("@CRAN@" %in% r) {
+    r[r == "@CRAN@"] <- "https://cran.rstudio.com"
+  }
+  r
 }

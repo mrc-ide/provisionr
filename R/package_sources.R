@@ -22,7 +22,7 @@
 package_sources <- function(cran = NULL, repos = NULL,
                             github = NULL, local = NULL) {
   if (is.null(cran)) {
-    cran <- "https://cran.rstudio.com"
+    cran <- sanitise_options_cran()
   } else {
     assert_scalar_character(cran)
   }
@@ -59,42 +59,46 @@ package_sources <- function(cran = NULL, repos = NULL,
     spec <- c(spec, paste0("local::", local))
   }
 
-  self <- list(cran = cran, repos = repos, spec = spec)
-  self$build <- function(path, refresh = FALSE) {
-    ret <- local_drat(self, path)
-    skip <- !refresh && file.exists(path) && all(vlapply(spec, ret$db$exists))
-    if (!skip) {
-      ret$build()
-    }
-    ret
+  self <- list2env(list(cran = cran, repos = repos, spec = spec),
+                   parent = emptyenv())
+  self$needs_build <- function() {
+    length(self$spec) > 0 &&
+      (is.null(self$local_drat) ||
+       !all(drat_storr(self$local_drat)$exists(self$spec)))
   }
+  self$build <- function(path, refresh = FALSE) {
+    if (is.null(path)) {
+      path <- self$local_drat
+      if (is.null(path)) {
+        stop("FIXME")
+      }
+    }
+    if (length(self$spec) > 0L) {
+      if (refresh || self$needs_build()) {
+        ans <- drat_build(self$spec, path)
+        self$local_drat <- path
+      }
+    }
+    invisible(self)
+  }
+
   class(self) <- "package_sources"
   self
 }
 
-local_drat <- function(src, path) {
-  ## This should keep track of when it was last built, what is in it,
-  ## etc.
-  self <- list(src = src,
-               path = path,
-               db = drat_storr(path))
-  self$build <- function() {
-    drat_build(src$spec, path)
-    self
+prepare_package_sources <- function(src, path_drat = NULL) {
+  if (inherits(src, "package_sources")) {
+    if (src$needs_build()) {
+      src$build(path_drat %||% tempfile())
+    }
+  } else if (!is.null(src)) {
+    stop("Invalid input for src")
   }
-
-  class(self) <- "local_drat"
-  self
+  src
 }
 
 ##' @export
 print.package_sources <- function(x, ...) {
-  cat(paste(as.character(x), collapse = "\n"), "\n")
-  invisible(x)
-}
-
-##' @export
-print.local_drat <- function(x, ...) {
   cat(paste(as.character(x), collapse = "\n"), "\n")
   invisible(x)
 }
@@ -114,22 +118,22 @@ as.character.package_sources <- function(x, ...) {
     str <- c(str,
              unlist(lapply(names(x_spec), f, x_spec), use.names = FALSE))
   }
-  str
-}
-
-##' @export
-as.character.local_drat <- function(x, ...) {
-  k <- x$db$list()
-  v <- lapply(k, x$db$get)
-  dat <- data.frame(name = vcapply(v, "[[", "Package"),
-                    version = vcapply(v, "[[", "Version"),
-                    updated = vcapply(v, function(el)
-                      prettyunits::time_ago(el$timestamp)),
-                    stringsAsFactors = FALSE)
-  str <- c("<local_drat>",
-           "  source:",
-           paste("    ", as.character(x$src)),
-           "  contents:",
-           paste("    ", capture.output(print(dat, row.names = FALSE))))
+  if (!is.null(x$local_drat)) {
+    db <- drat_storr(x$local_drat)
+    k <- db$list()
+    v <- db$mget(k)
+    dat <- data.frame(name = vcapply(v, "[[", "Package"),
+                      version = vcapply(v, "[[", "Version"),
+                      updated = vcapply(v, function(el)
+                        prettyunits::time_ago(el$timestamp)),
+                      stringsAsFactors = FALSE)
+    str <- c(str,
+             "  drat:",
+             sprintf("    path: %s", x$local_drat),
+             "    contents:",
+             paste("    ", capture.output(print(dat, row.names = FALSE))))
+  } else if (length(x$spec) > 0L) {
+    str <- c(str, "  drat: <pending build>")
+  }
   str
 }
