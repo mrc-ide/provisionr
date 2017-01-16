@@ -20,8 +20,9 @@
 ##'
 ##' @export
 package_sources <- function(cran = NULL, repos = NULL,
-                            github = NULL, local = NULL) {
-  R6_package_sources$new(cran, repos, github, local)
+                            github = NULL, local = NULL,
+                            expire = NULL) {
+  R6_package_sources$new(cran, repos, github, local, expire)
 }
 
 R6_package_sources <- R6::R6Class(
@@ -31,8 +32,9 @@ R6_package_sources <- R6::R6Class(
     repos = NULL,
     spec = NULL,
     local_drat = NULL,
+    expire = NULL,
 
-    initialize = function(cran, repos, github, local) {
+    initialize = function(cran, repos, github, local, expire) {
       if (is.null(cran)) {
         cran <- sanitise_options_cran()
       } else {
@@ -78,12 +80,28 @@ R6_package_sources <- R6::R6Class(
         spec <- c(spec, paste0("local::", local))
       }
       self$spec <- spec
+
+      if (!is.null(expire)) {
+        assert_scalar_numeric(expire)
+        if (expire <= 0) {
+          stop("'expire' must be positive")
+        }
+        self$expire <- expire
+      }
     },
 
     needs_build = function() {
-      length(self$spec) > 0 &&
+      rebuild <- length(self$spec) > 0 &&
         (is.null(self$local_drat) ||
          !all(drat_storr(self$local_drat)$exists(self$spec)))
+      if (!rebuild && !is.null(self$expire)) {
+        db <- drat_storr(self$local_drat)
+        k <- db$list()
+        v <- db$mget(k)
+        t_old <- Sys.time() - self$expire * 24 * 60 * 60
+        rebuild <- any(vlapply(v, function(el) el$timestamp < t_old))
+      }
+      rebuild
     },
 
     build = function(path, refresh = FALSE) {
@@ -149,6 +167,21 @@ as.character.package_sources <- function(x, ...) {
              sprintf("    path: %s", x$local_drat),
              "    contents:",
              paste("    ", capture.output(print(dat, row.names = FALSE))))
+    if (!is.null(x$expire) && length(v) > 0L) {
+      expire <- lapply(v, function(el) el$timestamp + x$expire * 24 * 60 * 60)
+      dt <- expire[[which.max(unlist(expire))]] - Sys.time()
+      expire_str <-
+        prettyunits::pretty_dt(as.difftime(x$expire, units = "days"))
+      if (dt > 0) {
+        str <- c(str,
+                 sprintf("    expires: %s (valid for %s)",
+                         prettyunits::pretty_dt(dt), expire_str))
+      } else {
+        str <- c(str,
+                 sprintf("    expired: %s (valid for %s)",
+                         prettyunits::vague_dt(- dt), expire_str))
+      }
+    }
   } else if (length(x$spec) > 0L) {
     str <- c(str, "  drat: <pending build>")
   }

@@ -122,6 +122,17 @@ test_that("prepare_repos", {
                         sanitise_options_cran())))
 })
 
+test_that("expire", {
+  dt <- 0.1
+  src <- package_sources(local = "hello", expire = dt / (24 * 60 * 60))
+  src$build(tempfile())
+  expect_false(src$needs_build())
+  expect_match(as.character(src), "expires:", fixed = TRUE, all = FALSE)
+  Sys.sleep(dt)
+  expect_true(src$needs_build())
+  expect_match(as.character(src), "expired:", fixed = TRUE, all = FALSE)
+})
+
 test_that("prepare_package_sources", {
 })
 
