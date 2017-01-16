@@ -21,70 +21,87 @@
 ##' @export
 package_sources <- function(cran = NULL, repos = NULL,
                             github = NULL, local = NULL) {
-  if (is.null(cran)) {
-    cran <- sanitise_options_cran()
-  } else {
-    assert_scalar_character(cran)
-  }
-
-  if (!is.null(repos)) {
-    assert_character(repos)
-    names(repos) <- repos
-    is_drat <- grepl("^drat://", repos)
-    repos[is_drat] <- sprintf("https://%s.github.io/drat/",
-                              sub("^drat://", "", repos[is_drat]))
-    if (!all(grepl("^[a-z]+://", repos))) {
-      stop("Missing url scheme")
-    }
-  }
-
-  ## Collect all the spec information here into a single vector, I
-  ## think; that'll be easier to modify.
-  spec <- NULL
-
-  if (!is.null(github)) {
-    tmp <- lapply(github, parse_remote)
-    err <- vcapply(tmp, "[[", "type") != "github"
-    if (any(err)) {
-      stop("Non-github spec ", paste(github[err], collapse = ", "))
-    }
-    spec <- c(spec, vcapply(tmp, "[[", "spec"))
-  }
-
-  if (!is.null(local)) {
-    if (!all(file.exists(local))) {
-      stop("Missing local files: ",
-           paste(local[!file.exists(local)], collapse = ", "))
-    }
-    spec <- c(spec, paste0("local::", local))
-  }
-
-  self <- list2env(list(cran = cran, repos = repos, spec = spec),
-                   parent = emptyenv())
-  self$needs_build <- function() {
-    length(self$spec) > 0 &&
-      (is.null(self$local_drat) ||
-       !all(drat_storr(self$local_drat)$exists(self$spec)))
-  }
-  self$build <- function(path, refresh = FALSE) {
-    if (is.null(path)) {
-      path <- self$local_drat
-      if (is.null(path)) {
-        stop("FIXME")
-      }
-    }
-    if (length(self$spec) > 0L) {
-      if (refresh || self$needs_build()) {
-        ans <- drat_build(self$spec, path)
-        self$local_drat <- path
-      }
-    }
-    invisible(self)
-  }
-
-  class(self) <- "package_sources"
-  self
+  R6_package_sources$new(cran, repos, github, local)
 }
+
+R6_package_sources <- R6::R6Class(
+  "package_sources",
+  public = list(
+    cran = NULL,
+    repos = NULL,
+    spec = NULL,
+    local_drat = NULL,
+
+    initialize = function(cran, repos, github, local) {
+      if (is.null(cran)) {
+        cran <- sanitise_options_cran()
+      } else {
+        ## No reason why this can't be a vector, though it does get a bit
+        ## overlappy with repos
+        assert_character(cran)
+        if (length(cran) == 0) {
+          stop("At least one cran repository must be given")
+        }
+      }
+      self$cran <- cran
+
+      if (!is.null(repos)) {
+        assert_character(repos)
+        names(repos) <- repos
+        is_drat <- grepl("^drat://", repos)
+        repos[is_drat] <- sprintf("https://%s.github.io/drat/",
+                                  sub("^drat://", "", repos[is_drat]))
+        if (!all(grepl("^[a-z]+://", repos))) {
+          stop("Missing url scheme")
+        }
+        self$repos <- repos
+      }
+
+      ## Collect all the spec information here into a single vector, I
+      ## think; that'll be easier to modify.
+      spec <- NULL
+
+      if (!is.null(github)) {
+        tmp <- lapply(github, parse_remote)
+        err <- vcapply(tmp, "[[", "type") != "github"
+        if (any(err)) {
+          stop("Non-github spec ", paste(github[err], collapse = ", "))
+        }
+        spec <- c(spec, vcapply(tmp, "[[", "spec"))
+      }
+
+      if (!is.null(local)) {
+        if (!all(file.exists(local))) {
+          stop("Missing local files: ",
+               paste(local[!file.exists(local)], collapse = ", "))
+        }
+        spec <- c(spec, paste0("local::", local))
+      }
+      self$spec <- spec
+    },
+
+    needs_build = function() {
+      length(self$spec) > 0 &&
+        (is.null(self$local_drat) ||
+         !all(drat_storr(self$local_drat)$exists(self$spec)))
+    },
+
+    build = function(path, refresh = FALSE) {
+      if (is.null(path)) {
+        path <- self$local_drat
+        if (is.null(path)) {
+          stop("FIXME")
+        }
+      }
+      if (length(self$spec) > 0L) {
+        if (refresh || self$needs_build()) {
+          ans <- drat_build(self$spec, path)
+          self$local_drat <- path
+        }
+      }
+      invisible(self)
+    }
+  ))
 
 prepare_package_sources <- function(src, path_drat = NULL) {
   if (inherits(src, "package_sources")) {

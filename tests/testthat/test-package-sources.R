@@ -30,16 +30,15 @@ test_that("build (local)", {
 
   tmp <- tempfile()
   expect_true(src$needs_build())
-  ret <- src$build(tmp)
-  expect_identical(ret, src)
-  expect_equal(ret$local_drat, tmp)
-  expect_true(file.exists(ret$local_drat))
+  src$build(tmp)
+  expect_equal(src$local_drat, tmp)
+  expect_true(file.exists(src$local_drat))
 
-  path <- file.path(ret$local_drat, "src", "contrib")
+  path <- file.path(src$local_drat, "src", "contrib")
   pkgs <- read.dcf(file.path(path, "PACKAGES"))
   expect_equal(unname(pkgs[, "Package"]), "hello")
 
-  dat <- drat_storr(ret$local_drat)$get(src$spec)
+  dat <- drat_storr(src$local_drat)$get(src$spec)
   tgz <- file.path(path, dat$tgz)
   expect_true(file.exists(tgz))
   expect_equal(unname(tools::md5sum(tgz)), dat$md5)
@@ -52,15 +51,14 @@ test_that("build (github)", {
 
   tmp <- tempfile()
   ret <- src$build(tmp)
-  expect_identical(ret, src)
-  expect_equal(ret$local_drat, tmp)
-  expect_true(file.exists(ret$local_drat))
+  expect_equal(src$local_drat, tmp)
+  expect_true(file.exists(src$local_drat))
 
-  path <- file.path(ret$local_drat, "src", "contrib")
+  path <- file.path(src$local_drat, "src", "contrib")
   pkgs <- read.dcf(file.path(path, "PACKAGES"))
   expect_equal(unname(pkgs[, "Package"]), "kitten")
 
-  dat <- drat_storr(ret$local_drat)$get(src$spec)
+  dat <- drat_storr(src$local_drat)$get(src$spec)
   tgz <- file.path(path, dat$tgz)
   expect_true(file.exists(tgz))
   expect_equal(unname(tools::md5sum(tgz)), dat$md5)
@@ -71,8 +69,8 @@ test_that("supplied cran", {
   src <- package_sources(cran = "http://mycran.com")
   expect_equal(src$cran, "http://mycran.com")
   expect_error(
-    package_sources(cran = c("http://cran1.com", "http://cran2.com")),
-    "cran must be a scalar")
+    package_sources(cran = character()),
+    "At least one cran repository must be given")
 })
 
 test_that("repos", {
