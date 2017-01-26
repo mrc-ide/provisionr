@@ -8,7 +8,10 @@
 ##' @param packages A character vector of packages to include
 ##'
 ##' @param lib A path to the library; if it does not exist, it will be
-##'   created.
+##'   created.  If given as a vector of libraries (i.e., with more
+##'   than one element) then packages will be installed into the first
+##'   library, but subsequent libraries will be checked to make sure
+##'   that dependencies are satisfied.
 ##'
 ##' @param platform The platform to create the library for.  If
 ##'   \code{NULL} then we build for the current platform (using
@@ -53,6 +56,11 @@
 ##'   allow packages to be missing that need to be compiled?  The
 ##'   interface here is going to change a bunch, so watch out...
 ##'
+##' @param quiet Passed through to to \code{\link{install.packages}},
+##'   indicating if package installation should be done quietly.  With
+##'   this as \code{FALSE} (the default) rather a lot of output can be
+##'   generated.
+##'
 ##' @export
 ##'
 ##' @importFrom stats na.omit setNames
@@ -66,7 +74,8 @@ provision_library <- function(packages, lib,
                               src = NULL, path_drat = NULL,
                               check_dependencies = TRUE,
                               installed_action = "upgrade",
-                              allow_missing = FALSE) {
+                              allow_missing = FALSE,
+                              quiet = FALSE) {
   assert_scalar_character(lib)
   assert_scalar_logical(check_dependencies)
   installed_action <-
@@ -96,10 +105,11 @@ provision_library <- function(packages, lib,
     ## think.
     res <- install_packages(packages, lib, repos,
                             standalone = check_dependencies,
-                            installed_action = installed_action)
+                            installed_action = installed_action,
+                            quiet = quiet)
   } else {
     db <- available_packages(repos, platform, version)
-    if (!is.null(src)) {
+    if (!is.null(src$local_drat)) {
       special <- unname(
         read.dcf(file.path(contrib_url(src$local_drat, "src", NULL),
                            "PACKAGES"), "Package")[, "Package"])

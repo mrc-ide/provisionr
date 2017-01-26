@@ -3,14 +3,12 @@
 install_packages <- function(packages, lib, repos, ...,
                              standalone = FALSE,
                              installed_action = "skip",
-                             error = TRUE) {
+                             error = TRUE,
+                             quiet = FALSE) {
   ## TODO: At the moment, this is going to ignore the installed_action
   ## bit and we'll pick that up by refactoring the plan bits from
   ## cross_install.  This will have the (big) advantage of memoising
   ## the calls to available.packages
-  ##
-  ## TODO: at the moment, this produces a lot more noise than the
-  ## cross_install so I've set it to quiet = TRUE for now.
   if (length(packages) == 0L) {
     return()
   }
@@ -51,7 +49,7 @@ install_packages <- function(packages, lib, repos, ...,
     }
   }
   install_packages2(packages, lib, repos = repos, ...,
-                    error = error, quiet = TRUE)
+                    error = error, quiet = quiet)
   ## TODO: This is not all the packages that were installed...
   invisible(packages)
 }

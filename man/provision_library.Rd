@@ -6,13 +6,16 @@
 \usage{
 provision_library(packages, lib, platform = NULL, version = NULL,
   src = NULL, path_drat = NULL, check_dependencies = TRUE,
-  installed_action = "replace", allow_missing = FALSE)
+  installed_action = "upgrade", allow_missing = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{packages}{A character vector of packages to include}
 
 \item{lib}{A path to the library; if it does not exist, it will be
-created.}
+created.  If given as a vector of libraries (i.e., with more
+than one element) then packages will be installed into the first
+library, but subsequent libraries will be checked to make sure
+that dependencies are satisfied.}
 
 \item{platform}{The platform to create the library for.  If
 \code{NULL} then we build for the current platform (using
@@ -29,8 +32,10 @@ running R version.  Otherwise provide the desired version number
 as a string or \code{numeric_version} object.}
 
 \item{src}{An optional description of additional packages, using
-\code{\link{package_sources}} (can be either a
-\code{package_sources} object or a \code{local_drat} object).}
+\code{\link{package_sources}}.  It will only be rebuilt
+(fetching packages) if it has \emph{never} been built, or of
+packages listed in the \code{spec} element are not found in the
+repository.}
 
 \item{path_drat}{When using a \code{package_sources} object for
 \code{src}, the path to store the drat repository.  If not
@@ -54,6 +59,11 @@ any package that is already installed).}
 \code{cross_install} when \code{platform} is non-\code{NULL}),
 allow packages to be missing that need to be compiled?  The
 interface here is going to change a bunch, so watch out...}
+
+\item{quiet}{Passed through to to \code{\link{install.packages}},
+indicating if package installation should be done quietly.  With
+this as \code{FALSE} (the default) rather a lot of output can be
+generated.}
 }
 \description{
 Create or update a library of packages.

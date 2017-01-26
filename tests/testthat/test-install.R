@@ -5,14 +5,15 @@ test_that("throw on unavailable package", {
   repos <- sanitise_options_cran()
   path <- tempfile()
   expect_error(suppressWarnings(
-    install_packages("nosuchpackage", lib, repos)),
+    install_packages("nosuchpackage", lib, repos, quiet = TRUE)),
     "is not available")
   expect_warning(
-    install_packages("nosuchpackage", lib, repos, error = FALSE),
+    install_packages("nosuchpackage", lib, repos, error = FALSE, quiet = TRUE),
     "is not available")
   expect_error(
     suppressWarnings(
-      install_packages("nosuchpackage", lib, repos, error = FALSE)),
+      install_packages("nosuchpackage", lib, repos, error = FALSE,
+                       quiet = TRUE)),
     NA)
 })
 
@@ -20,7 +21,7 @@ test_that("throw on broken package", {
   pkg <- build_package("broken")
   on.exit(file.remove(pkg))
   expect_error(suppressWarnings(
-    install_packages(pkg, NULL, NULL, error = TRUE)),
+    install_packages(pkg, NULL, NULL, error = TRUE, quiet = TRUE)),
     "had non-zero exit status")
 })
 
