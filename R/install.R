@@ -3,6 +3,7 @@
 install_packages <- function(packages, lib, repos, ...,
                              standalone = FALSE,
                              installed_action = "skip",
+                             check_dependencies = FALSE,
                              error = TRUE,
                              quiet = FALSE) {
   ## TODO: At the moment, this is going to ignore the installed_action
@@ -10,19 +11,27 @@ install_packages <- function(packages, lib, repos, ...,
   ## cross_install.  This will have the (big) advantage of memoising
   ## the calls to available.packages
   if (length(packages) == 0L) {
-    return()
+    return(NULL)
   }
   lib <- default_lib(lib)
   dir.create(lib, FALSE, TRUE)
-  if (standalone) {
+
+  if (standalone && length(lib) > 1L) {
+    ## TODO: never triggered, unless lib bits above are dealt with;
+    ## need to split into "search" and "install" libs.
+    lib <- lib[[1L]]
+  }
+
+  if (installed_action == "skip") {
+    ## strictly, we should pass in check_dependencies here I think.
+    packages <- check_installed_packages(packages, lib)
+  } else {
     db <- available_packages(repos, NULL, NULL)
     ## TODO: a different plan will be needed here when not creating a
     ## standalong repo; probably the biggest difference will be that
     ## 'lib' should be a vector of libraries to look in.
     ##
-    ## TODO: Obviously rename cross_install_plan
-    ##
-    ## TODO: probably refactor cross_install_plan as all we care about
+    ## TODO: probably refactor plan_installation as all we care about
     ## here is the installation candidates but the binary/compile bit
     ## can be inferred later from the database given the list.
     ## Probably as useful will be something indicating if things are
@@ -40,7 +49,10 @@ install_packages <- function(packages, lib, repos, ...,
     ## TODO: if we have the db we can pass it through as available
     ## perhaps (though it interacts in annoying ways with
     ## binary/source installation).
-    plan <- cross_install_plan(packages, db, lib, installed_action)
+    ##
+    ## TODO: non-standalone installation is really very different now;
+    ## probably want to fix that.
+    plan <- plan_installation(packages, db, lib, installed_action)
     extra <- setdiff(plan$packages, packages)
     if (length(extra) > 0L) {
       provisionr_log("deps", sprintf("%d extra: %s", length(extra),
@@ -48,10 +60,11 @@ install_packages <- function(packages, lib, repos, ...,
       packages <- plan$packages
     }
   }
-  install_packages2(packages, lib, repos = repos, ...,
-                    error = error, quiet = quiet)
-  ## TODO: This is not all the packages that were installed...
-  invisible(packages)
+
+  if (length(packages) > 0L) {
+    install_packages2(packages, lib, repos = repos, ...,
+                      error = error, quiet = quiet)
+  }
 }
 
 default_lib <- function(lib) {

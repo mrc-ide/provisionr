@@ -3,7 +3,9 @@ context("cross_install")
 test_that("binary cross install", {
   lib <- tempfile()
   db <- available_packages("https://cran.rstudio.com", "windows", NULL)
-  res <- cross_install_packages("ape", lib, db)
+  packages <- "ape"
+  plan <- plan_installation(packages, db, lib, "upgrade")
+  res <- cross_install_packages("ape", lib, db, plan)
   expect_equal(dir(lib), "ape")
   expect_true(file.exists(file.path(lib, "ape", "libs", "x64", "ape.dll")))
 })
@@ -11,7 +13,9 @@ test_that("binary cross install", {
 test_that("binary cross install with deps", {
   lib <- tempfile()
   db <- available_packages("https://cran.rstudio.com", "windows", NULL)
-  res <- cross_install_packages("devtools", lib, db)
+  packages <- "devtools"
+  plan <- plan_installation(packages, db, lib, "upgrade")
+  res <- cross_install_packages(packages, lib, db, plan)
   expect_true("devtools" %in% dir(lib))
   expect_true("httr" %in% dir(lib))
   expect_true(file.exists(
@@ -27,36 +31,36 @@ test_that("binary cross install with deps", {
   dat <- check_library("devtools", lib)
   expect_true("httr" %in% dat$missing)
 
-  p1 <- cross_install_plan("httr", db, lib, "skip")
+  p1 <- plan_installation("httr", db, lib, "skip")
   expect_equal(p1$packages, c("curl", "httr"))
-  p2 <- cross_install_plan("httr", db, lib, "upgrade")
+  p2 <- plan_installation("httr", db, lib, "upgrade")
   expect_equal(p2, p1)
-  p3 <- cross_install_plan("httr", db, lib, "upgrade_all")
+  p3 <- plan_installation("httr", db, lib, "upgrade_all")
   expect_equal(p3, p1)
-  p4 <- cross_install_plan("httr", db, lib, "replace")
+  p4 <- plan_installation("httr", db, lib, "replace")
   expect_gt(length(p4$packages), length(p1$packages))
   expect_true(all(p1$packages %in% p4$packages))
 
   ## Bit of fiddling with version numbers:
   alter_package_version(file.path(lib, "openssl"), increase = FALSE)
 
-  q1 <- cross_install_plan("httr", db, lib, "skip")
+  q1 <- plan_installation("httr", db, lib, "skip")
   expect_equal(q1, p1)
-  q2 <- cross_install_plan("httr", db, lib, "upgrade")
+  q2 <- plan_installation("httr", db, lib, "upgrade")
   expect_equal(q2, p2)
-  q3 <- cross_install_plan("httr", db, lib, "upgrade_all")
+  q3 <- plan_installation("httr", db, lib, "upgrade_all")
   expect_equal(sort(q3$packages), sort(c(p3$packages, "openssl")))
-  q4 <- cross_install_plan("httr", db, lib, "replace")
+  q4 <- plan_installation("httr", db, lib, "replace")
   expect_equal(q4, p4)
 
   ## And again, with the next package up:
-  r1 <- cross_install_plan("devtools", db, lib, "skip")
+  r1 <- plan_installation("devtools", db, lib, "skip")
   expect_equal(r1, p1)
-  r2 <- cross_install_plan("devtools", db, lib, "upgrade")
+  r2 <- plan_installation("devtools", db, lib, "upgrade")
   expect_equal(r2, p2)
-  r3 <- cross_install_plan("devtools", db, lib, "upgrade_all")
+  r3 <- plan_installation("devtools", db, lib, "upgrade_all")
   expect_equal(r3, q3)
-  r4 <- cross_install_plan("devtools", db, lib, "replace")
+  r4 <- plan_installation("devtools", db, lib, "replace")
   expect_gt(length(r4$packages), length(p4$packages))
   expect_true(all(p4$packages %in% r4$packages))
 })
@@ -161,7 +165,7 @@ test_that("missing packages", {
   lib <- tempfile()
   db <- available_packages("https://cran.rstudio.com", "windows", NULL)
 
-  expect_error(cross_install_plan("foobar", db, lib, "skip"),
+  expect_error(plan_installation("foobar", db, lib, "skip"),
                "Can't find installation candidate for: foobar")
 
   ## Filter some dependencies off of my lists:
@@ -170,6 +174,6 @@ test_that("missing packages", {
     db2[[i]] <- db2[[i]][rownames(db2[[i]]) != "curl", , drop = FALSE]
   }
 
-  expect_error(cross_install_plan("httr", db2, lib, "skip"),
+  expect_error(plan_installation("httr", db2, lib, "skip"),
                "Can't find installation candidate for dependencies: curl")
 })

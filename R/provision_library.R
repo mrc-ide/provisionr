@@ -76,39 +76,62 @@ provision_library <- function(packages, lib,
                               installed_action = "upgrade",
                               allow_missing = FALSE,
                               quiet = FALSE) {
+  if (length(packages) == 0L) {
+    return(character(0))
+  }
+
+  ## TODO: standalone argument that has an effect here where 'lib' is
+  ## a vector; the checking functions will then look into all
+  ## libraries, but install only into the last one.
   assert_scalar_character(lib)
+  dir.create(lib, FALSE, TRUE)
+
+  ## TODO: this no longer does what it says on the tin, quite.
   assert_scalar_logical(check_dependencies)
   installed_action <-
     match_value(installed_action,
                 c("replace", "upgrade_all", "upgrade", "skip"))
 
-  ## TODO: this could be broadened out to detect our current platform
-  ## and version as a self install
-  self <- is.null(platform) && is.null(version)
+  if (installed_action == "skip") {
+    packages <- check_installed_packages(packages, lib)
+    if (length(packages) == 0L) {
+      return(character(0))
+    }
+  }
 
+  ## Then we prepare the 'package_sources' object; this will pull all
+  ## required packages into the drat repository (but not build binary
+  ## packages)
   src <- prepare_package_sources(src, path_drat)
   if (!is.null(src$local_drat) && is.null(path_drat)) {
     on.exit(unlink(src$local_drat, recursive = TRUE))
   }
   repos <- prepare_repos(src)
 
-  dir.create(lib, FALSE, TRUE)
+  db <- available_packages(repos, platform, version)
+  plan <- plan_installation(packages, db, lib, installed_action)
+  extra <- setdiff(plan$packages, packages)
+  if (length(extra) > 0L) {
+    provisionr_log("deps", sprintf("%d extra: %s", length(extra),
+                                   paste(extra, collapse = ", ")))
+    packages <- plan$packages
+  }
+
+  self <- is.null(platform) && is.null(version)
+
   if (self) {
     ## TODO: deal with the case where there are source packages in the
-    ## drat that need compilation, if those occur upstream.  Though I
-    ## think that install.packages will actually do a decent job here.
-    ## It'd be easy enough to check by downloading a source CRAN
-    ## package, updating the version number, adding to the drat and
-    ## seeing what happens.  Needs testing on OSX/Windows though.
-    ##
-    ## TODO: this could be done more simply by passing repos through I
-    ## think.
-    res <- install_packages(packages, lib, repos,
-                            standalone = check_dependencies,
-                            installed_action = installed_action,
-                            quiet = quiet)
+    ## drat that need compilation, if those occur upstream; see the
+    ## note below.  Though I think that install.packages will
+    ## actually do a decent job here.  It'd be easy enough to check by
+    ## downloading a source CRAN package, updating the version number,
+    ## adding to the drat and seeing what happens.  Needs testing on
+    ## OSX/Windows though.
+    install_packages2(packages, lib, repos = repos,
+                      error = TRUE, quiet = quiet)
   } else {
-    db <- available_packages(repos, platform, version)
+    ## These are a bit special, and I don't manage to treat these
+    ## correctly with the non-cross install I think.  However, I don
     if (!is.null(src$local_drat)) {
       special <- unname(
         read.dcf(file.path(contrib_url(src$local_drat, "src", NULL),
@@ -119,13 +142,11 @@ provision_library <- function(packages, lib,
         db$bin <- db$bin[-i, , drop = FALSE]
       }
     }
-    res <- with_repos(repos,
-                      cross_install_packages(
-                        packages, lib, db,
-                        installed_action = installed_action,
-                        allow_missing = allow_missing))
+    plan <- cross_install_packages(packages, lib, db, plan,
+                                   allow_missing = allow_missing)
   }
-  res
+
+  plan
 }
 
 with_repos <- function(repos, expr) {
