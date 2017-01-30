@@ -50,7 +50,7 @@ test_that("cross, multiple packages", {
 test_that("use package sources - transient drat", {
   lib <- tempfile()
   src <- package_sources(local = "hello")
-  res <- provision_library("hello", lib, src = src)
+  res <- provision_library("hello", lib, src = src, quiet = TRUE)
   expect_equal(dir(lib), "hello")
 })
 
@@ -58,7 +58,8 @@ test_that("use package sources - persistent drat", {
   lib <- tempfile()
   drat <- tempfile()
   src <- package_sources(github = "richfitz/kitten")
-  res <- provision_library("kitten", lib, src = src, path_drat = drat)
+  res <- provision_library("kitten", lib, src = src, path_drat = drat,
+                           quiet = TRUE)
   expect_true(file.exists(drat))
   expect_equal(drat_storr(drat)$list(), "github::richfitz/kitten")
 })
