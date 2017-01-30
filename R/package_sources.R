@@ -18,6 +18,12 @@
 ##' @param local A character vector of local files to include.  Can be
 ##'   directories or built packages (source or binary)
 ##'
+##' @param expire Optional period, in days, to expire the local copy
+##'   of the package.  If specified, then if a package was downloaded
+##'   more than\code{expire} days ago when the local copy is checked,
+##'   a new version will be downloaded.  Can be a fractional value
+##'   (e.g., \code{expire = 0.04} for an expiry of around an hour).
+##'
 ##' @export
 package_sources <- function(cran = NULL, repos = NULL,
                             github = NULL, local = NULL,

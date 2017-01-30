@@ -24,6 +24,12 @@ tag).}
 
 \item{local}{A character vector of local files to include.  Can be
 directories or built packages (source or binary)}
+
+\item{expire}{Optional period, in days, to expire the local copy
+of the package.  If specified, then if a package was downloaded
+more than\code{expire} days ago when the local copy is checked,
+a new version will be downloaded.  Can be a fractional value
+(e.g., \code{expire = 0.04} for an expiry of around an hour).}
 }
 \description{
 Collect information on package sources
