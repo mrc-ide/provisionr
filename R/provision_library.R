@@ -77,7 +77,7 @@ provision_library <- function(packages, lib,
                               allow_missing = FALSE,
                               quiet = FALSE) {
   if (length(packages) == 0L) {
-    return(character(0))
+    return(NULL)
   }
 
   ## TODO: standalone argument that has an effect here where 'lib' is
@@ -95,7 +95,7 @@ provision_library <- function(packages, lib,
   if (installed_action == "skip") {
     packages <- check_installed_packages(packages, lib)
     if (length(packages) == 0L) {
-      return(character(0))
+      return(NULL)
     }
   }
 
@@ -131,7 +131,8 @@ provision_library <- function(packages, lib,
                       error = TRUE, quiet = quiet)
   } else {
     ## These are a bit special, and I don't manage to treat these
-    ## correctly with the non-cross install I think.  However, I don
+    ## correctly with the non-cross install, unless the version
+    ## numbers are increased, and even then it may not work.
     if (!is.null(src$local_drat)) {
       special <- unname(
         read.dcf(file.path(contrib_url(src$local_drat, "src", NULL),
@@ -139,6 +140,11 @@ provision_library <- function(packages, lib,
       i <- which(rownames(db$bin) %in% special)
       drop <- i[db$bin[i, "Repository"] != file_url(src$local_drat)]
       if (length(drop) > 0L) {
+        ## Need to update the plan, too, here.
+        special_bin <- intersect(rownames(db$bin)[i], plan$packages)
+        j <- match(special_bin, plan$packages)
+        plan$binary[j] <- FALSE
+        plan$compile[j] <- db$src[special_bin, "NeedsCompilation"] == "yes"
         db$bin <- db$bin[-i, , drop = FALSE]
       }
     }

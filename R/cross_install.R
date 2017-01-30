@@ -14,7 +14,7 @@ cross_install_packages <- function(packages, lib, db, plan, ...,
                  paste(needs_compilation, collapse=", "))
     if (allow_missing) {
       plan$missing <- db$src[needs_compilation, , drop = FALSE]
-      message(msg)
+      provisionr_log("skip", msg)
     } else {
       stop(msg)
     }
