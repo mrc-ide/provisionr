@@ -170,6 +170,7 @@ download_package <- function(x) {
 
 drat_repo_init <- function(path) {
   dir.create(file.path(path, "src", "contrib"), FALSE, TRUE)
+  provisionr_log("drat", paste0("@", path))
 }
 
 extract_DESCRIPTION <- function(filename) {

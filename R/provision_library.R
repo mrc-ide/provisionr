@@ -103,9 +103,6 @@ provision_library <- function(packages, lib,
   ## required packages into the drat repository (but not build binary
   ## packages)
   src <- prepare_package_sources(src, path_drat)
-  if (!is.null(src$local_drat) && is.null(path_drat)) {
-    on.exit(unlink(src$local_drat, recursive = TRUE))
-  }
   repos <- prepare_repos(src)
 
   db <- available_packages(repos, platform, version)
