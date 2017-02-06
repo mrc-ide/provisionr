@@ -152,6 +152,8 @@ provision_library <- function(packages, lib,
                                    allow_missing = allow_missing)
   }
 
+  plan$path_lib <- lib
+
   plan
 }
 

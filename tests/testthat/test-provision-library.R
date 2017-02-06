@@ -6,6 +6,7 @@ test_that("own platform, single package, not compiled", {
   expect_equal(dir(lib), "R6")
   expect_equal(.packages(TRUE, lib), "R6")
   expect_equal(res$packages, "R6")
+  expect_equal(res$path_lib, lib)
 })
 
 test_that("own platform, single package, compiled", {
