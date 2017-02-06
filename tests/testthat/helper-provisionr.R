@@ -13,7 +13,19 @@ Sys.setenv(R_TESTS = "")
 alter_package_version <- function(path, increase) {
   desc <- file.path(path, "DESCRIPTION")
   d <- read.dcf(desc)
-  v <- numeric_version(d[, "Version"])
+  v <- alter_version(d[, "Version"], increase)
+  d[, "Version"] <- v
+  write.dcf(d, desc)
+  invisible(numeric_version(v))
+}
+
+alter_version <- function(v, increase) {
+  if (inherits(v, "numeric_version")) {
+    as_version <- TRUE
+  } else {
+    v <- numeric_version(v)
+    as_version <- FALSE
+  }
   if (increase) {
     i <- length(unclass(v)[[1L]])
     v[[1L, i]] <- v[[1L, i]] + 1L
@@ -25,7 +37,5 @@ alter_package_version <- function(path, increase) {
       }
     }
   }
-  d[, "Version"] <- as.character(v)
-  write.dcf(d, desc)
-  invisible(v)
+  if (as_version) v else as.character(v)
 }

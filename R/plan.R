@@ -36,8 +36,34 @@ plan_installation <- function(packages, db, lib, installed_action) {
     packages <- check_version(check, lib, db)
   }
 
+  ## Check the versions here to prefer source packages where they
+  ## are newer
+  nv <- function(x) {
+    x[is.na(x)] <- "0.0.0"
+    numeric_version(x)
+  }
+  v_bin <- nv(db$bin[match(packages, db$bin), "Version"])
+  v_src <- nv(db$src[match(packages, db$src), "Version"])
+  avoid_bin <- intersect(packages[v_src > v_bin], rownames(db$bin))
+  if (length(avoid_bin) > 0L) {
+    ## TODO: should this be made conditional on the packages coming from
+    ## different repositories (to avoid the case of packages being
+    ## upgraded on CRAN?).  It's really only a big problem for packages
+    ## that need compilation but I don't want to have to compile more
+    ## things than necessary...
+    ##
+    ## either use a re, or use urltools::url_parse, to check to see
+    ## whether these are at the same repo, perhaps?
+    ##
+    ## re <- "(.*?)://(/?[^/]+)(/.*)"
+    ## repo_bin <- db$bin[avoid_bin, "Repository"]
+    ## repo_src <- db$src[avoid_bin, "Repository"]
+    db$bin <- db$bin[-match(avoid_bin, rownames(db$bin)), ]
+  }
+
   compile <- rep_len(FALSE, length(packages))
   binary <- packages %in% rownames(db$bin)
+
   if (any(!binary)) {
     j <- match(packages[!binary], db$src[, "Package"])
     compile[!binary] <- db$src[j, "NeedsCompilation"] == "yes"
@@ -45,7 +71,8 @@ plan_installation <- function(packages, db, lib, installed_action) {
 
   list(packages = packages,
        binary = binary,
-       compile = compile)
+       compile = compile,
+       db = db)
 }
 
 check_installed_packages <- function(packages, lib, cols = NULL) {
@@ -210,4 +237,19 @@ check_version <- function(packages, lib, db) {
     installed[installed] <- v_installed >= v_db
   }
   packages[!installed]
+}
+
+plan_force_binary <- function(packages, plan, local_drat) {
+  i <- which(rownames(plan$db$bin) %in% packages)
+  drop <- i[plan$db$bin[i, "Repository"] != file_url(local_drat)]
+  if (length(drop) > 0L) {
+    ## Need to update the plan, too, here.
+    packages_bin <- intersect(rownames(plan$db$bin)[i], plan$packages)
+    j <- match(packages_bin, plan$packages)
+    plan$binary[j] <- FALSE
+    plan$compile[j] <- plan$db$src[packages_bin, "NeedsCompilation"] == "yes"
+    plan$db$bin <- plan$db$bin[-i, , drop = FALSE]
+  }
+
+  plan
 }

@@ -137,17 +137,9 @@ provision_library <- function(packages, lib,
       special <- unname(
         read.dcf(file.path(contrib_url(src$local_drat, "src", NULL),
                            "PACKAGES"), "Package")[, "Package"])
-      i <- which(rownames(db$bin) %in% special)
-      drop <- i[db$bin[i, "Repository"] != file_url(src$local_drat)]
-      if (length(drop) > 0L) {
-        ## Need to update the plan, too, here.
-        special_bin <- intersect(rownames(db$bin)[i], plan$packages)
-        j <- match(special_bin, plan$packages)
-        plan$binary[j] <- FALSE
-        plan$compile[j] <- db$src[special_bin, "NeedsCompilation"] == "yes"
-        db$bin <- db$bin[-i, , drop = FALSE]
-      }
+      plan <- plan_force_binary(special, plan, src$local_drat)
     }
+
     plan <- cross_install_packages(packages, lib, db, plan,
                                    allow_missing = allow_missing)
   }
