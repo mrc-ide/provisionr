@@ -96,12 +96,12 @@ R6_package_sources <- R6::R6Class(
       }
     },
 
-    needs_build = function() {
+    needs_build = function(path = self$local_drat) {
       rebuild <- length(self$spec) > 0 &&
-        (is.null(self$local_drat) ||
-         !all(drat_storr(self$local_drat)$exists(self$spec)))
+        (is.null(path) ||
+         !all(drat_storr(path)$exists(self$spec)))
       if (!rebuild && !is.null(self$expire)) {
-        db <- drat_storr(self$local_drat)
+        db <- drat_storr(path)
         k <- db$list()
         v <- db$mget(k)
         t_old <- Sys.time() - self$expire * 24 * 60 * 60
@@ -118,7 +118,7 @@ R6_package_sources <- R6::R6Class(
         }
       }
       if (length(self$spec) > 0L) {
-        if (refresh || self$needs_build()) {
+        if (refresh || self$needs_build(path)) {
           ans <- drat_build(self$spec, path)
           self$local_drat <- path
         }
@@ -129,8 +129,9 @@ R6_package_sources <- R6::R6Class(
 
 prepare_package_sources <- function(src, path_drat = NULL) {
   if (inherits(src, "package_sources")) {
-    if (src$needs_build()) {
-      src$build(path_drat %||% tempfile())
+    path_drat <- path_drat %||% tempfile()
+    if (src$needs_build(path_drat)) {
+      src$build(path_drat)
     }
   } else if (!is.null(src)) {
     stop("Invalid input for src")

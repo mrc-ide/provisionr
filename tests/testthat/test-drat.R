@@ -55,12 +55,16 @@ test_that("update", {
 
   src <- package_sources(local = hello)
   expect_true(src$needs_build())
+  expect_true(src$needs_build(tempfile()))
 
   tmp <- tempfile()
   expect_message(src$build(tmp), "drat")
   expect_false(src$needs_build())
+  expect_equal(src$local_drat, tmp)
+  expect_true(src$needs_build(tempfile()))
 
   expect_silent(src$build(tmp))
+  expect_silent(src$build(NULL))
 
   ## Now, we update the package:
   v <- alter_package_version(hello, increase = TRUE)
