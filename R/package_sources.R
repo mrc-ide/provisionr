@@ -24,11 +24,18 @@
 ##'   a new version will be downloaded.  Can be a fractional value
 ##'   (e.g., \code{expire = 0.04} for an expiry of around an hour).
 ##'
+##' @param local_drat Optional location to cache downloaded packages,
+##'   when \code{github} or \code{local} packages are used.  If not
+##'   given, this can be set at any time by setting the
+##'   \code{local_drat} element of the returned element.  If not given
+##'   by the time that the packages need to be downloaded then a
+##'   session-specific temporary directory will be used.
+##'
 ##' @export
 package_sources <- function(cran = NULL, repos = NULL,
                             github = NULL, local = NULL,
-                            expire = NULL) {
-  R6_package_sources$new(cran, repos, github, local, expire)
+                            expire = NULL, local_drat = NULL) {
+  R6_package_sources$new(cran, repos, github, local, expire, local_drat)
 }
 
 R6_package_sources <- R6::R6Class(
@@ -40,7 +47,7 @@ R6_package_sources <- R6::R6Class(
     local_drat = NULL,
     expire = NULL,
 
-    initialize = function(cran, repos, github, local, expire) {
+    initialize = function(cran, repos, github, local, expire, local_drat) {
       if (is.null(cran)) {
         cran <- sanitise_options_cran()
       } else {
@@ -94,6 +101,11 @@ R6_package_sources <- R6::R6Class(
         }
         self$expire <- expire
       }
+
+      if (!is.null(local_drat)) {
+        assert_scalar_character(local_drat)
+        self$local_drat <- local_drat
+      }
     },
 
     needs_build = function(path = self$local_drat) {
@@ -110,18 +122,18 @@ R6_package_sources <- R6::R6Class(
       rebuild
     },
 
-    build = function(path, refresh = FALSE) {
-      if (is.null(path)) {
-        path <- self$local_drat
-        if (is.null(path)) {
-          stop("FIXME")
-        }
-      }
+    build = function(path = NULL, refresh = FALSE) {
       if (length(self$spec) > 0L) {
+        if (is.null(path)) {
+          path <- self$local_drat
+          if (is.null(path)) {
+            stop("FIXME")
+          }
+        }
         if (refresh || self$needs_build(path)) {
           ans <- drat_build(self$spec, path)
-          self$local_drat <- path
         }
+        self$local_drat <- path
       }
       invisible(self)
     }

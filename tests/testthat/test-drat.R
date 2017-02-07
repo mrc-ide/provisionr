@@ -92,3 +92,20 @@ test_that("binary package", {
   expect_equal(nrow(db$bin), 1)
   expect_equal(rownames(db$bin), "ape")
 })
+
+test_that("local_drat in constructor", {
+  path <- tempfile()
+  dir.create(path)
+  file.copy("hello", path, recursive = TRUE)
+  hello <- file.path(path, "hello")
+  tmp <- tempfile()
+
+  src <- package_sources(local = hello, local_drat = tmp)
+  expect_equal(src$local_drat, tmp)
+  expect_true(src$needs_build())
+  expect_false(file.exists(tmp))
+  src$build()
+  expect_equal(src$local_drat, tmp)
+  expect_false(src$needs_build())
+  expect_true(file.exists(tmp))
+})

@@ -5,7 +5,7 @@
 \title{Collect information on package sources}
 \usage{
 package_sources(cran = NULL, repos = NULL, github = NULL, local = NULL,
-  expire = NULL)
+  expire = NULL, local_drat = NULL)
 }
 \arguments{
 \item{cran}{A single URL for the CRAN repo to use.  If
@@ -30,6 +30,13 @@ of the package.  If specified, then if a package was downloaded
 more than\code{expire} days ago when the local copy is checked,
 a new version will be downloaded.  Can be a fractional value
 (e.g., \code{expire = 0.04} for an expiry of around an hour).}
+
+\item{local_drat}{Optional location to cache downloaded packages,
+when \code{github} or \code{local} packages are used.  If not
+given, this can be set at any time by setting the
+\code{local_drat} element of the returned element.  If not given
+by the time that the packages need to be downloaded then a
+session-specific temporary directory will be used.}
 }
 \description{
 Collect information on package sources
