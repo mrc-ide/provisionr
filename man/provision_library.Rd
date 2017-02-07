@@ -5,8 +5,8 @@
 \title{Create or update a library}
 \usage{
 provision_library(packages, lib, platform = NULL, version = NULL,
-  src = NULL, path_drat = NULL, check_dependencies = TRUE,
-  installed_action = "upgrade", allow_missing = FALSE, quiet = FALSE)
+  src = NULL, check_dependencies = TRUE, installed_action = "upgrade",
+  allow_missing = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{packages}{A character vector of packages to include}
@@ -36,10 +36,6 @@ as a string or \code{numeric_version} object.}
 (fetching packages) if it has \emph{never} been built, or of
 packages listed in the \code{spec} element are not found in the
 repository.}
-
-\item{path_drat}{When using a \code{package_sources} object for
-\code{src}, the path to store the drat repository.  If not
-given, then a temporary directory will be used.}
 
 \item{check_dependencies}{Logical, indicating if dependencies of
 \code{packges} should be checked.  If \code{TRUE}, then any

@@ -108,42 +108,42 @@ R6_package_sources <- R6::R6Class(
       }
     },
 
-    needs_build = function(path = self$local_drat) {
+    needs_build = function() {
+      path <- self$local_drat
       rebuild <- length(self$spec) > 0 &&
-        (is.null(path) ||
+        (is.null(path) || !file.exists(path) ||
          !all(drat_storr(path)$exists(self$spec)))
       if (!rebuild && !is.null(self$expire)) {
         db <- drat_storr(path)
-        k <- db$list()
-        v <- db$mget(k)
+        v <- db$mget(db$list())
         t_old <- Sys.time() - self$expire * 24 * 60 * 60
         rebuild <- any(vlapply(v, function(el) el$timestamp < t_old))
       }
       rebuild
     },
 
-    build = function(path = NULL, refresh = FALSE) {
+    build = function(refresh = FALSE) {
       if (length(self$spec) > 0L) {
-        if (is.null(path)) {
-          path <- self$local_drat
-          if (is.null(path)) {
-            stop("FIXME")
-          }
+        if (is.null(self$local_drat)) {
+          ## TODO: this may not always be desirable, because if this
+          ## ends up serialised, it will point to a directory that has
+          ## disappeared after the session disappears.  I think that
+          ## use of clone() should get around this enough.
+          self$local_drat <- tempfile()
         }
-        if (refresh || self$needs_build(path)) {
-          ans <- drat_build(self$spec, path)
+        path <- self$local_drat
+        if (refresh || self$needs_build()) {
+          drat_build(self$spec, path)
         }
-        self$local_drat <- path
       }
       invisible(self)
     }
   ))
 
-prepare_package_sources <- function(src, path_drat = NULL) {
+prepare_package_sources <- function(src) {
   if (inherits(src, "package_sources")) {
-    path_drat <- path_drat %||% tempfile()
-    if (src$needs_build(path_drat)) {
-      src$build(path_drat)
+    if (src$needs_build()) {
+      src$build()
     }
   } else if (!is.null(src)) {
     stop("Invalid input for src")

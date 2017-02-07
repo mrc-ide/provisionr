@@ -33,10 +33,6 @@
 ##'   packages listed in the \code{spec} element are not found in the
 ##'   repository.
 ##'
-##' @param path_drat When using a \code{package_sources} object for
-##'   \code{src}, the path to store the drat repository.  If not
-##'   given, then a temporary directory will be used.
-##'
 ##' @param check_dependencies Logical, indicating if dependencies of
 ##'   \code{packges} should be checked.  If \code{TRUE}, then any
 ##'   missing dependencies (packages in Depends, Imports or LinkingTo
@@ -71,7 +67,7 @@
 ##' @author Rich FitzJohn
 provision_library <- function(packages, lib,
                               platform = NULL, version = NULL,
-                              src = NULL, path_drat = NULL,
+                              src = NULL,
                               check_dependencies = TRUE,
                               installed_action = "upgrade",
                               allow_missing = FALSE,
@@ -102,7 +98,7 @@ provision_library <- function(packages, lib,
   ## Then we prepare the 'package_sources' object; this will pull all
   ## required packages into the drat repository (but not build binary
   ## packages)
-  src <- prepare_package_sources(src, path_drat)
+  src <- prepare_package_sources(src)
   repos <- prepare_repos(src)
 
   db <- available_packages(repos, platform, version)

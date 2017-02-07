@@ -70,9 +70,9 @@ test_that("cross install source package", {
 
   ## This is never going on CRAN and has no nasty dependencies:
   src <- package_sources(github = "richfitz/kitten")
-  path_drat <- tempfile()
-  drat <- src$build(path_drat)
-  provision_library("kitten", lib, platform = "windows", src = drat)
+  src$local_drat <- tempfile()
+  src$build()
+  provision_library("kitten", lib, platform = "windows", src = src)
   expect_equal(dir(lib), "kitten")
 })
 
@@ -81,7 +81,7 @@ test_that("cross install source package", {
 ## binary files to fail
 test_that("cross install package that triggers load", {
   src <- package_sources(local = "lazyproblem")
-  drat <- src$build(tempfile())
+  drat <- src$build()
   path <- tempfile()
   provision_library("lazyproblem", path, platform = "windows", src = drat)
   pkgs <- .packages(TRUE, path)
@@ -130,7 +130,7 @@ test_that("missing compiled packages", {
   ##
   ## TODO: cache the calls here, possibly across sessions?
   src <- package_sources(github = "richfitz/dde")
-  drat <- src$build(tempfile())
+  drat <- src$build()
 
   ## NOTE: This triggers the lazy loading issue that I had in context
   ## (and had solved there at some point) where lazy loading of one
@@ -148,7 +148,7 @@ test_that("prefer drat files", {
   ## TODO: this can actually point at the source file already in the
   ## same repo.
   src <- package_sources(github = "cran/ape")
-  drat <- src$build(tempfile())
+  drat <- src$build()
   path <- tempfile()
   ans <- provision_library("ape", path, platform = "windows", src = drat,
                            allow_missing = TRUE)

@@ -5,6 +5,7 @@ test_that("defaults", {
   expect_equal(src$cran, sanitise_options_cran())
   expect_null(src$repos)
   expect_null(src$spec)
+  expect_null(src$local_drat)
 })
 
 test_that("github", {
@@ -28,10 +29,9 @@ test_that("build (local)", {
   src <- package_sources(local = "hello")
   expect_null(src$local_drat)
 
-  tmp <- tempfile()
   expect_true(src$needs_build())
-  src$build(tmp)
-  expect_equal(src$local_drat, tmp)
+  src$build()
+  expect_is(src$local_drat, "character")
   expect_true(file.exists(src$local_drat))
 
   path <- file.path(src$local_drat, "src", "contrib")
@@ -49,9 +49,8 @@ test_that("build (github)", {
   src <- package_sources(github = "richfitz/kitten")
   expect_null(src$local_drat)
 
-  tmp <- tempfile()
-  ret <- src$build(tmp)
-  expect_equal(src$local_drat, tmp)
+  src$local_drat <- tempfile()
+  ret <- src$build()
   expect_true(file.exists(src$local_drat))
 
   path <- file.path(src$local_drat, "src", "contrib")
@@ -102,7 +101,7 @@ test_that("print", {
   expect_match(as.character(x), "<package_sources>", fixed = TRUE, all = FALSE)
   expect_output(print(x), "<package_sources>", fixed = TRUE)
   expect_output(print(x), "drat: <pending build>")
-  y <- x$build(tempfile())
+  y <- x$build()
   expect_match(as.character(y), "<package_sources>", fixed = TRUE, all = FALSE)
   expect_output(print(x), paste("path:", tempdir()), fixed = TRUE)
 })
@@ -116,7 +115,7 @@ test_that("prepare_repos", {
   expect_equal(prepare_repos(src), c(src$repos, src$cran))
 
   src <- package_sources(repos = "https://foo.com", local = "hello")
-  dat <- src$build(tempfile())
+  dat <- src$build()
   expect_equal(unname(prepare_repos(dat)),
                unname(c(file_url(dat$local_drat), dat$repos,
                         sanitise_options_cran())))
@@ -125,7 +124,7 @@ test_that("prepare_repos", {
 test_that("expire", {
   dt <- 0.1
   src <- package_sources(local = "hello", expire = dt / (24 * 60 * 60))
-  src$build(tempfile())
+  src$build()
   expect_false(src$needs_build())
   expect_match(as.character(src), "expires:", fixed = TRUE, all = FALSE)
   Sys.sleep(dt)
@@ -133,11 +132,8 @@ test_that("expire", {
   expect_match(as.character(src), "expired:", fixed = TRUE, all = FALSE)
 })
 
-test_that("prepare_package_sources", {
-})
-
 ## fails because the github parse fails:
-## x <- package_sources(github = "hello")$build(tempfile())
+## x <- package_sources(github = "hello")$build()
 
 ## make sure that we parse things properly on entry and then this is
 ## not a problem.  Same with the local file presence issue.

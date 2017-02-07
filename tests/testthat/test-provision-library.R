@@ -58,9 +58,8 @@ test_that("use package sources - transient drat", {
 test_that("use package sources - persistent drat", {
   lib <- tempfile()
   drat <- tempfile()
-  src <- package_sources(github = "richfitz/kitten")
-  res <- provision_library("kitten", lib, src = src, path_drat = drat,
-                           quiet = TRUE)
+  src <- package_sources(github = "richfitz/kitten", local_drat = drat)
+  res <- provision_library("kitten", lib, src = src, quiet = TRUE)
   expect_true(file.exists(drat))
   expect_equal(drat_storr(drat)$list(), "github::richfitz/kitten")
 })
