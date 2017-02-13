@@ -72,3 +72,16 @@ test_that("own platform - re-provision", {
                                          installed_action = "skip"))
   expect_null(res)
 })
+
+test_that("auxillary library", {
+  ## TODO: class the output of provision_library so that the db does
+  ## not print!
+  lib1 <- tempfile()
+  res1 <- provision_library("curl", lib1, "windows")
+
+  lib2 <- tempfile()
+  res2 <- provision_library("httr", c(lib2, lib1), "windows")
+
+  expect_true("curl" %in% dir(lib1))
+  expect_false("curl" %in% dir(lib2))
+})

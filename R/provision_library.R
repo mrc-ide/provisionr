@@ -76,10 +76,12 @@ provision_library <- function(packages, lib,
     return(NULL)
   }
 
-  ## TODO: standalone argument that has an effect here where 'lib' is
-  ## a vector; the checking functions will then look into all
-  ## libraries, but install only into the last one.
-  assert_scalar_character(lib)
+  assert_character(lib)
+  if (length(lib) < 0L) {
+    stop("'lib' must have at least one element")
+  }
+  lib_check <- lib
+  lib <- lib[[1L]]
   dir.create(lib, FALSE, TRUE)
 
   ## TODO: this no longer does what it says on the tin, quite.
@@ -89,7 +91,7 @@ provision_library <- function(packages, lib,
                 c("replace", "upgrade_all", "upgrade", "skip"))
 
   if (installed_action == "skip") {
-    packages <- check_installed_packages(packages, lib)
+    packages <- check_installed_packages(packages, lib_check)
     if (length(packages) == 0L) {
       return(NULL)
     }
@@ -102,7 +104,7 @@ provision_library <- function(packages, lib,
   repos <- prepare_repos(src)
 
   db <- available_packages(repos, platform, version)
-  plan <- plan_installation(packages, db, lib, installed_action)
+  plan <- plan_installation(packages, db, lib_check, installed_action)
   extra <- setdiff(plan$packages, packages)
   if (length(extra) > 0L) {
     provisionr_log("deps", sprintf("%d extra: %s", length(extra),
@@ -139,7 +141,7 @@ provision_library <- function(packages, lib,
 
   plan$path_lib <- lib
 
-  plan
+  invisible(plan)
 }
 
 with_repos <- function(repos, expr) {
