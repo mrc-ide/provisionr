@@ -18,3 +18,13 @@ test_that("upgraded CRAN package", {
   expect_false(plan2$binary[i])
   expect_true(all(plan2$binary[!i]))
 })
+
+test_that("plan", {
+  lib <- tempfile()
+  db <- available_packages(getOption("repos")[[1]], "windows", NULL)
+  packages <- "devtools"
+  plan <- plan_installation(packages, db, lib, "upgrade")
+  expect_is(plan, "provisionr_plan")
+  expect_true(all(plan$binary))
+  expect_output(print(plan), "<provisionr_plan>", fixed = TRUE)
+})

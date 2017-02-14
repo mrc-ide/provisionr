@@ -2,6 +2,7 @@
 
 S3method(as.character,package_sources)
 S3method(print,package_sources)
+S3method(print,provisionr_plan)
 export(package_sources)
 export(provision_library)
 importFrom(stats,na.omit)

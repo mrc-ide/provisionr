@@ -69,10 +69,12 @@ plan_installation <- function(packages, db, lib, installed_action) {
     compile[!binary] <- db$src[j, "NeedsCompilation"] == "yes"
   }
 
-  list(packages = packages,
-       binary = binary,
-       compile = compile,
-       db = db)
+  ret <- list(packages = packages,
+              binary = binary,
+              compile = compile,
+              db = db)
+  class(ret) <- "provisionr_plan"
+  ret
 }
 
 check_installed_packages <- function(packages, lib, cols = NULL) {
@@ -252,4 +254,13 @@ plan_force_binary <- function(packages, plan, local_drat) {
   }
 
   plan
+}
+
+##' @export
+print.provisionr_plan <- function(x, ...) {
+  cat("<provisionr_plan>\n")
+  pkgs <- strwrap(paste(x$packages, collapse = ", "),
+                  initial = " - packages: ", exdent = 13)
+  cat(paste0(pkgs, "\n", collapse = ""))
+  invisible(x)
 }
