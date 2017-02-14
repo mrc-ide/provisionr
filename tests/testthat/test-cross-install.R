@@ -177,3 +177,18 @@ test_that("missing packages", {
   expect_error(plan_installation("httr", db2, lib, "skip"),
                "Can't find installation candidate for dependencies: curl")
 })
+
+test_that("remove existing packages on upgrade", {
+  packages <- "ape"
+  lib <- tempfile()
+  db <- available_packages(getOption("repos")[[1L]], "windows", NULL)
+  plan <- plan_installation(packages, db, lib, "replace")
+  cross_install_packages(packages, lib, db, plan)
+
+  f <- file.path(lib, "ape", "provisionr")
+  writeLines("provisionr", f)
+  expect_true(file.exists(f))
+
+  cross_install_packages(packages, lib, db, plan)
+  expect_false(file.exists(f))
+})
