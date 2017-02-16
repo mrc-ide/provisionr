@@ -5,8 +5,6 @@ Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
 Version: 0.0.1
 Description: Provision a set of packages into a new library, possibly for
     use on a different architecture.
-Depends:
-    R (>= 3.3.1)
 License: MIT + file LICENSE
 Imports:
     R6,

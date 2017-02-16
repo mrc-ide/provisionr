@@ -2,7 +2,6 @@ Package: lazyproblem
 Title: Lazy Loading Problem
 Version: 0.1.0
 Description: Triggers lazy loading problem with compiled package
-Depends: R (>= 3.3.1)
 License: CC0
 Author: Rich FitzJohn
 Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
