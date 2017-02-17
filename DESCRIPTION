@@ -11,10 +11,10 @@ Imports:
     drat,
     prettyunits,
     remotes,
-    storr (>= 1.0.3)
-Suggests:
-    testthat,
+    storr (>= 1.0.3),
     withr
+Suggests:
+    testthat
 Remotes:
     richfitz/storr@develop
 RoxygenNote: 5.0.1

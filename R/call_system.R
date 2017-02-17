@@ -3,13 +3,13 @@
 ##' @importFrom utils head tail
 call_system <- function(command, args, env = character(), max_lines = 20,
                         p = 0.8) {
-  res <- suppressWarnings(system2(command, args,
-                                  env = env, stdout = TRUE, stderr = TRUE))
+  res <- withr::with_envvar(
+    env,
+    suppressWarnings(system2(command, args, stdout = TRUE, stderr = TRUE)))
   ok <- attr(res, "status")
   if (!is.null(ok) && ok != 0) {
     max_nc <- getOption("warning.length")
-
-    cmd <- paste(c(env, shQuote(command), args), collapse = " ")
+    cmd <- paste(c(shQuote(command), args), collapse = " ")
     msg <- sprintf("Running command:\n  %s\nhad status %d", cmd, ok)
     errmsg <- attr(cmd, "errmsg")
     if (!is.null(errmsg)) {

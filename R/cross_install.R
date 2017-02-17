@@ -72,7 +72,6 @@ cross_install_package <- function(package, lib, binary, db) {
     on.exit(try(unlink(lib_tmp, recursive = TRUE), silent = TRUE), add = TRUE)
     env <- c(R_LIBS_USER = paste(.libPaths(), collapse = .Platform$path.sep),
              CYGWIN = "nodosfilewarning")
-    env <- sprintf("%s=%s", names(env), unname(env))
     args <- c("CMD", "INSTALL", "--no-test-load",
               paste0("--library=", shQuote(normalizePath(lib_tmp, "/"))),
               shQuote(normalizePath(path)))

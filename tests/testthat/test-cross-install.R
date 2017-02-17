@@ -94,6 +94,7 @@ test_that("cross install package that triggers load", {
     lib_us,
     provision_library("lazyproblem", lib_other,
                       platform = "windows", src = drat))
+
   pkgs <- .packages(TRUE, lib_other)
   expect_equal(sort(pkgs), sort(c("ape", "lazyproblem")))
 })
