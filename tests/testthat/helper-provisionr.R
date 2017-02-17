@@ -31,13 +31,13 @@ alter_version <- function(v, increase) {
 make_local_cran <- function() {
   path <- "local_cran"
   packages <- c("devtools", "progress", "ape")
+  dir.create(path, FALSE, TRUE)
+  on.exit(unlink(path, recursive = TRUE))
 
   version <- check_r_version(NULL)
   version_str <- r_version_str(version)
   repo <- "https://cran.rstudio.com"
   db <- available_packages(repo, "windows", NULL)
-
-  tmp <- available_packages(normalizePath(path), "windows", NULL)
 
   pkgs <- recursive_deps(packages, db$all)
 
@@ -53,6 +53,7 @@ make_local_cran <- function() {
 
   tools::write_PACKAGES(dest_src, type = "source")
   tools::write_PACKAGES(dest_bin, type = "win.binary")
+  on.exit()
 }
 
 ## Try to fetch things from a local cran mirror.  Create this with
