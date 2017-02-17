@@ -1,15 +1,3 @@
-## Try to fetch things from a local cran mirror.  Create this with
-## `make_local_cran()` which downloads the packages required to run
-## the tests.  There are a few 10s of MB of files (20MB as of Nov
-## 2016).
-if (file.exists("local_cran")) {
-  options(repos = c(file_url("local_cran"), "https://cran.rstudio.com"))
-} else {
-  options(repos = "https://cran.rstudio.com")
-}
-
-Sys.setenv(R_TESTS = "")
-
 alter_package_version <- function(path, increase) {
   desc <- file.path(path, "DESCRIPTION")
   d <- read.dcf(desc)
@@ -39,3 +27,43 @@ alter_version <- function(v, increase) {
   }
   if (as_version) v else as.character(v)
 }
+
+make_local_cran <- function() {
+  path <- "local_cran"
+  packages <- c("devtools", "progress", "ape")
+
+  version <- check_r_version(NULL)
+  version_str <- r_version_str(version)
+  repo <- "https://cran.rstudio.com"
+  db <- available_packages(repo, "windows", NULL)
+
+  tmp <- available_packages(normalizePath(path), "windows", NULL)
+
+  pkgs <- recursive_deps(packages, db$all)
+
+  url_src <- contrib_url(repo, "src", version_str)
+  url_bin <- contrib_url(repo, "windows", version_str)
+  dest_src <- contrib_url(path, "src", version_str)
+  dest_bin <- contrib_url(path, "windows", version_str)
+  dir.create(dest_src, FALSE, TRUE)
+  dir.create(dest_bin, FALSE, TRUE)
+
+  download.packages(pkgs, dest_src, db$src, repo, url_src, type = "source")
+  download.packages(pkgs, dest_bin, db$bin, repo, url_bin, type = "win.binary")
+
+  tools::write_PACKAGES(dest_src, type = "source")
+  tools::write_PACKAGES(dest_bin, type = "win.binary")
+}
+
+## Try to fetch things from a local cran mirror.  Create this with
+## `make_local_cran()` which downloads the packages required to run
+## the tests.  There are a few 10s of MB of files (20MB as of Nov
+## 2016).
+Sys.setenv(R_TESTS = "")
+if (!file.exists("local_cran")) {
+  message("Building local CRAN repository for tests")
+  make_local_cran()
+} else {
+  message("Found local CRAN repository")
+}
+options(repos = c(file_url("local_cran"), "https://cran.rstudio.com"))

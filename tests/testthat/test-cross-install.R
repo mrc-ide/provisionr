@@ -86,7 +86,7 @@ test_that("cross install package that triggers load", {
   ## Need to get a copy of a binary package that will conflict loaded
   ## for lazyloading to fail.
   lib_us <- tempfile()
-  provision_library("ape", lib_us)
+  provision_library("ape", lib_us, quiet = TRUE)
   expect_true("ape" %in% dir(lib_us))
 
   lib_other <- tempfile()
