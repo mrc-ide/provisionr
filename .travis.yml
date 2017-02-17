@@ -1,0 +1,7 @@
+language: r
+cache: packages
+sudo: false
+r_packages:
+  - covr
+after_success:
+  - Rscript -e 'covr::codecov()'
