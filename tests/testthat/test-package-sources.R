@@ -122,7 +122,7 @@ test_that("prepare_repos", {
 })
 
 test_that("expire", {
-  dt <- 0.1
+  dt <- 1.0
   src <- package_sources(local = "hello", expire = dt / (24 * 60 * 60))
   src$build()
   expect_false(src$needs_build())
