@@ -149,12 +149,17 @@ available_packages <- function(repos, platform, version) {
     platform <- match_value(platform, valid_platforms())
   }
 
-  is_local <- grepl("^(/|file://)", repos)
+  is_local <- grepl("^(/|[A-Za-z]:|file://)", repos)
   if (any(is_local)) {
     i <- file.exists(repos)
     if (any(i)) {
       repos[i] <- file_url(repos[i])
     }
+  }
+  err <- !grepl("^[a-z]+://", repos)
+  if (any(err)) {
+    stop("Not all repos resolvable as urls: ",
+         paste(repos[err], collapse = ", "))
   }
 
   url_src <- contrib_url(repos, "src", NULL)
