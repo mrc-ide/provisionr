@@ -5,4 +5,4 @@ Description: Triggers lazy loading problem with compiled package
 License: CC0
 Author: Rich FitzJohn
 Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
-Imports: deSolve
+Imports: ape

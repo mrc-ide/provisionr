@@ -82,10 +82,20 @@ test_that("cross install source package", {
 test_that("cross install package that triggers load", {
   src <- package_sources(local = "lazyproblem")
   drat <- src$build()
-  path <- tempfile()
-  provision_library("lazyproblem", path, platform = "windows", src = drat)
-  pkgs <- .packages(TRUE, path)
-  expect_equal(sort(pkgs), sort(c("deSolve", "lazyproblem")))
+
+  ## Need to get a copy of a binary package that will conflict loaded
+  ## for lazyloading to fail.
+  lib_us <- tempfile()
+  provision_library("ape", lib_us)
+  expect_true("ape" %in% dir(lib_us))
+
+  lib_other <- tempfile()
+  withr::with_libpaths(
+    lib_us,
+    provision_library("lazyproblem", lib_other,
+                      platform = "windows", src = drat))
+  pkgs <- .packages(TRUE, lib_other)
+  expect_equal(sort(pkgs), sort(c("ape", "lazyproblem")))
 })
 
 test_that("installed_action", {

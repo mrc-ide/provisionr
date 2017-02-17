@@ -13,7 +13,8 @@ Imports:
     remotes,
     storr (>= 1.0.3)
 Suggests:
-    testthat
+    testthat,
+    withr
 Remotes:
     richfitz/storr@develop
 RoxygenNote: 5.0.1
