@@ -6,3 +6,5 @@
 ^notes\.md$
 ^provisionr_.*\.tar\.gz$
 ^tests/testthat/local_cran$
+^\.travis\.yml$
+^appveyor\.yml$
