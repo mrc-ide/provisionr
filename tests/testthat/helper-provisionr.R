@@ -61,6 +61,9 @@ make_local_cran <- function() {
 ## the tests.  There are a few 10s of MB of files (20MB as of Nov
 ## 2016).
 Sys.setenv(R_TESTS = "")
+if (is_windows()) {
+  Sys.setenv(TAR = "internal")
+}
 if (!file.exists("local_cran")) {
   message("Building local CRAN repository for tests")
   make_local_cran()

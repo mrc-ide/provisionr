@@ -10,6 +10,7 @@ test_that("own platform, single package, not compiled", {
 })
 
 test_that("own platform, single package, compiled", {
+  skip_on_travis()
   lib <- tempfile()
   res <- provision_library("ape", lib, quiet = TRUE)
   expect_equal(dir(lib), "ape")

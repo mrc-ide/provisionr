@@ -80,6 +80,7 @@ test_that("cross install source package", {
 ## NAMESPACE file causes lazyloading of source files that depend on
 ## binary files to fail
 test_that("cross install package that triggers load", {
+  skip_on_travis()
   src <- package_sources(local = "lazyproblem")
   drat <- src$build()
 
