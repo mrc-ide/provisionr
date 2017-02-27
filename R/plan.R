@@ -11,14 +11,14 @@ plan_installation <- function(packages, db, lib, installed_action) {
   msg <- setdiff(packages, c(db$all[, "Package"], skip))
   if (length(msg) > 0L) {
     stop(sprintf("Can't find installation candidate for: %s",
-                 paste(msg, collapse=", ")))
+                 paste(msg, collapse = ", ")))
   }
 
   packages <- setdiff(recursive_deps(packages, db$all), skip)
   msg <- setdiff(packages, db$all[, "Package"])
   if (length(msg) > 0L) {
     stop(sprintf("Can't find installation candidate for dependencies: %s",
-                 paste(msg, collapse=", ")))
+                 paste(msg, collapse = ", ")))
   }
 
   if (installed_action == "skip") {

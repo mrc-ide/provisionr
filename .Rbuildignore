@@ -8,3 +8,4 @@
 ^tests/testthat/local_cran$
 ^\.travis\.yml$
 ^appveyor\.yml$
+^\.lintr$
