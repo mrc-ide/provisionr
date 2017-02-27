@@ -45,6 +45,13 @@ assert_scalar_character <- function(x, name = deparse(substitute(x))) {
   assert_nonmissing(x, name)
 }
 
+assert_is <- function(x, type, name = deparse(substitute(x))) {
+  if (!(inherits(x, type))) {
+    stop(sprintf("%s must inherit from %s",
+                 name, paste(type, collapse = " / ")))
+  }
+}
+
 match_value <- function(x, choices, name = deparse(substitute(x))) {
   assert_scalar_character(x, name)
   i <- match(x, choices)

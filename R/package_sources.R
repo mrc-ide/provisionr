@@ -34,8 +34,9 @@
 ##' @export
 package_sources <- function(cran = NULL, repos = NULL,
                             github = NULL, local = NULL,
-                            expire = NULL, local_drat = NULL) {
-  R6_package_sources$new(cran, repos, github, local, expire, local_drat)
+                            expire = NULL, local_drat = NULL,
+                            data = NULL) {
+  R6_package_sources$new(cran, repos, github, local, expire, local_drat, data)
 }
 
 R6_package_sources <- R6::R6Class(
@@ -47,7 +48,19 @@ R6_package_sources <- R6::R6Class(
     local_drat = NULL,
     expire = NULL,
 
-    initialize = function(cran, repos, github, local, expire, local_drat) {
+    initialize = function(cran, repos, github, local, expire, local_drat,
+                          data = NULL) {
+      if (!is.null(data)) {
+        assert_is(data, "package_sources_list")
+        ## Could require that none of these other arguments are non-NULL
+        self$cran <- data$cran
+        self$repos <- data$repos
+        self$spec <- data$spec
+        self$expire <- data$expire
+        self$local_drat <- data$local_drat
+        return()
+      }
+
       if (is.null(cran)) {
         cran <- sanitise_options_cran()
       } else {
@@ -106,6 +119,16 @@ R6_package_sources <- R6::R6Class(
         assert_scalar_character(local_drat)
         self$local_drat <- local_drat
       }
+    },
+
+    as_list = function() {
+      ret <- list(cran = self$cran,
+                  repos = self$repos,
+                  spec = self$spec,
+                  local_drat = self$local_drat,
+                  expire = self$expire)
+      class(ret) <- "package_sources_list"
+      ret
     },
 
     needs_build = function() {

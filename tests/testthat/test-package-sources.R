@@ -132,6 +132,22 @@ test_that("expire", {
   expect_match(as.character(src), "expired:", fixed = TRUE, all = FALSE)
 })
 
+test_that("export", {
+  src <- package_sources(local = "hello")
+  dat <- src$as_list()
+  expect_true(is.list(dat))
+  expect_is(dat, "package_sources_list")
+
+  src2 <- package_sources(data = dat)
+
+  for (field in names(src)) {
+    x <- src[[field]]
+    if (!(is.environment(x) || is.function(x))) {
+      expect_identical(src2[[field]], x)
+    }
+  }
+})
+
 ## fails because the github parse fails:
 ## x <- package_sources(github = "hello")$build()
 
