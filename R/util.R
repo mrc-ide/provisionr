@@ -2,6 +2,10 @@ is_windows <- function() {
   Sys.info()[["sysname"]] == "Windows"
 }
 
+is_mac <- function() {
+  Sys.info()[["sysname"]] == "Darwin"
+}
+
 ## TODO: All the usual crap of making this robust enough to rely on.
 download_file <- function(url, ..., progress = NULL, destfile = NULL,
                           keep_ext = FALSE) {

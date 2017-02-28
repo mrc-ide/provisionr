@@ -191,6 +191,7 @@ contrib_url <- function(repos, platform, version_str) {
   if (is.null(version_str)) {
     version_str <- r_version_str(check_r_version(version_str))
   }
+  assert_scalar_character("platform")
   ## platform should be:
   ##   src
   ##   windows
@@ -199,6 +200,7 @@ contrib_url <- function(repos, platform, version_str) {
   if (platform == "src") {
     path <- "src/contrib"
   } else {
+    match_value(platform, setdiff(valid_platforms(), "linux"))
     path <- file.path("bin", platform, "contrib", version_str)
   }
   file.path(sub("/$", "", repos), path)

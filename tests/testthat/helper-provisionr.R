@@ -44,15 +44,29 @@ make_local_cran <- function() {
   url_src <- contrib_url(repo, "src", version_str)
   url_bin <- contrib_url(repo, "windows", version_str)
   dest_src <- contrib_url(path, "src", version_str)
-  dest_bin <- contrib_url(path, "windows", version_str)
+  dest_bin_win <- contrib_url(path, "windows", version_str)
   dir.create(dest_src, FALSE, TRUE)
-  dir.create(dest_bin, FALSE, TRUE)
+  dir.create(dest_bin_win, FALSE, TRUE)
 
   download.packages(pkgs, dest_src, db$src, repo, url_src, type = "source")
-  download.packages(pkgs, dest_bin, db$bin, repo, url_bin, type = "win.binary")
+  download.packages(pkgs, dest_bin_win, db$bin, repo, url_bin,
+                    type = "win.binary")
 
   tools::write_PACKAGES(dest_src, type = "source")
-  tools::write_PACKAGES(dest_bin, type = "win.binary")
+  tools::write_PACKAGES(dest_bin_win, type = "win.binary")
+
+  ## Only bother doing this on a mac, because there are no tests of
+  ## provisioning a mac system (yet).
+  if (is_mac()) {
+    mac_platform <- "macosx/mavericks"
+    db_mac <- available_packages(repo, mac_platform, NULL)
+    dest_bin_mac <- contrib_url(path, mac_platform, version_str)
+    dir.create(dest_bin_mac, FALSE, TRUE)
+    download.packages(pkgs, dest_bin_mac, db_mac$bin, repo, url_bin,
+                      type = "mac.binary.mavericks")
+    tools::write_PACKAGES(dest_bin_mac, type = "mac.binary")
+  }
+
   on.exit()
 }
 
@@ -70,4 +84,5 @@ if (!file.exists("local_cran")) {
 } else {
   message("Found local CRAN repository")
 }
-options(repos = c(file_url("local_cran"), "https://cran.rstudio.com"))
+options(repos = c(file_url("local_cran"), "https://cran.rstudio.com"),
+        install.packages.check.source = "no")
