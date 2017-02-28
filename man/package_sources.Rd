@@ -37,6 +37,11 @@ given, this can be set at any time by setting the
 \code{local_drat} element of the returned element.  If not given
 by the time that the packages need to be downloaded then a
 session-specific temporary directory will be used.}
+
+\item{data}{An object of class \code{package_sources_list},
+created by running the \code{as_list()} method of a
+\code{package_sources} object.  This is useful for serialisation
+without saving references to \code{provisionr}.}
 }
 \description{
 Collect information on package sources
