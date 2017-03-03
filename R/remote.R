@@ -79,25 +79,15 @@ drat_storr <- function(path) {
 ## refreshing the store here; we could do that if we have a fast way
 ## of ripping through the directories and determine if any file has
 ## changed.
-drat_build <- function(specs, path) {
+drat_build <- function(specs, path, force) {
   drat_repo_init(path)
   desc <- list()
 
-  st <- drat_storr(path)
+  db <- drat_storr(path)
 
   while (length(specs) > 0L) {
-    for (x in lapply(specs, parse_remote)) {
-      provisionr_log("drat", x$spec)
-      pkg <- download_package(x)
-      d <- as.list(extract_DESCRIPTION(pkg)[1L, ])
-      d$tgz <- basename(pkg)
-      d$md5 <- unname(tools::md5sum(pkg))
-      d$timestamp <- Sys.time()
-      drat::insertPackage(pkg, path, commit = FALSE)
-      desc[[x$spec]] <- d
-      ## TODO: I think that I need to put the dependent repos in here
-      ## too so that I can query them later?
-      st$set(x$spec, d)
+    for (s in specs) {
+      desc[[s]] <- drat_build_package(s, path, db, force)
     }
 
     ## Then comes a fairly ugly bit of collecting up all the extra bits:
@@ -108,6 +98,45 @@ drat_build <- function(specs, path) {
   }
 
   desc
+}
+
+drat_build_package <- function(spec, path, db, force = FALSE) {
+  x <- parse_remote(spec)
+
+  provisionr_log("drat", x$spec)
+  ## Here, for github packages, I think we should see if we can avoid
+  ## downloading the package by hitting the github API and getting the
+  ## current version.  I don't depend on the necessary packages to do
+  ## this though; we'll need to depend on jsonlite and possibly on
+  ## curl
+  pkg <- download_package(x)
+  d <- as.list(extract_DESCRIPTION(pkg)[1L, ])
+
+  ## The rule here needs to be that we update things if either:
+  ##
+  ## * the version number changes
+  ## * some force flag is TRUE
+  ## * the contents of the package changes
+  if (!force && db$exists(spec)) {
+    prev <- db$get(spec)
+    ## TODO: This will need testing with binaries and will not work at
+    ## present!
+    if (numeric_version(prev$Version) == numeric_version(d$Version)) {
+      prev_file <- file.path(contrib.url(path, "source"), prev$tgz)
+      if (package_same_contents(prev_file, pkg, d$Package)) {
+        return(prev)
+      }
+    }
+  }
+
+  d$tgz <- basename(pkg)
+  d$md5 <- unname(tools::md5sum(pkg))
+  d$timestamp <- Sys.time()
+  drat::insertPackage(pkg, path, commit = FALSE)
+  ## TODO: I think that I need to put the dependent repos in here
+  ## too so that I can query them later?
+  db$set(x$spec, d)
+  d
 }
 
 github_build_package <- function(x) {
@@ -238,4 +267,41 @@ drat_add_empty_bin <- function(path) {
     dir.create(path, FALSE, TRUE)
     writeLines(character(0), path_PACKAGES)
   }
+}
+
+package_same_contents <- function(path1, path2, package) {
+  files1 <- extract(path1, list = TRUE)
+  files2 <- extract(path2, list = TRUE)
+  if (!setequal(files1, files2)) {
+    return(FALSE)
+  }
+  tmp1 <- tempfile()
+  tmp2 <- tempfile()
+  on.exit(unlink(c(tmp1, tmp2), recursive = TRUE))
+  extract(path1, exdir = tmp1)
+  extract(path2, exdir = tmp2)
+
+  ## Next, we try and rewrite the DESCRIPTION file a bit.  The key
+  ## things I need to remove are "Packaged" but it makes sense to rip
+  ## out "Built" too and that might be an issue if injecting a binary.
+  clean_description(file.path(tmp1, package, "DESCRIPTION"))
+  clean_description(file.path(tmp2, package, "DESCRIPTION"))
+
+  hash1 <- md5sum2(file.path(tmp1, files1))
+  hash2 <- md5sum2(file.path(tmp2, files1)) # NOTE: files1 to avoid sorting issues
+
+  all(hash1 == hash2)
+}
+
+clean_description <- function(path) {
+  dat <- read.dcf(path)
+  dat <- dat[, setdiff(colnames(dat), c("Packaged", "Built")), drop = FALSE]
+  write.dcf(dat, path)
+}
+
+md5sum2 <- function(paths) {
+  ret <- character(length(paths))
+  i <- !is_directory(paths)
+  ret[i] <- unname(tools::md5sum(paths[i]))
+  ret
 }

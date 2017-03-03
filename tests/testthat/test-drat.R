@@ -108,3 +108,31 @@ test_that("local_drat in constructor", {
   expect_false(src$needs_build())
   expect_true(file.exists(tmp))
 })
+
+test_that("update", {
+  path <- tempfile()
+  dir.create(path)
+  file.copy("hello", path, recursive = TRUE)
+  hello <- file.path(path, "hello")
+  tmp <- tempfile()
+
+  src <- package_sources(local = hello, local_drat = tmp)
+  expect_equal(src$local_drat, tmp)
+  expect_false(file.exists(tmp))
+  expect_true(src$needs_build())
+  expect_false(file.exists(tmp))
+
+  src$build()
+  db <- drat_storr(tmp)
+  d1 <- db$get(src$spec)
+  md5 <- d1$md5
+  tools::md5sum(file.path(contrib.url(tmp, "source"), d1$tgz))
+
+  src$build(TRUE)
+  expect_equal(db$get(src$spec), d1)
+
+  src$build(TRUE, TRUE)
+  d2 <- db$get(src$spec)
+  expect_false(identical(d1, d2))
+  expect_false(identical(d1$md5, d2$md5))
+})

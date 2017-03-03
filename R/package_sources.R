@@ -150,7 +150,7 @@ R6_package_sources <- R6::R6Class(
       rebuild
     },
 
-    build = function(refresh = FALSE) {
+    build = function(refresh = FALSE, force = FALSE) {
       if (length(self$spec) > 0L) {
         if (is.null(self$local_drat)) {
           ## TODO: this may not always be desirable, because if this
@@ -161,7 +161,7 @@ R6_package_sources <- R6::R6Class(
         }
         path <- self$local_drat
         if (refresh || self$needs_build()) {
-          drat_build(self$spec, path)
+          drat_build(self$spec, path, force)
         }
       }
       invisible(self)

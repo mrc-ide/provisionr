@@ -73,3 +73,12 @@ r_version_str <- function(version, n = 2L) {
   }
   paste(v[seq_len(n)], collapse = ".")
 }
+
+extract <- function(file, ...) {
+  assert_scalar_character(file)
+  if (grepl("\\.zip$", file, ignore.case = TRUE)) {
+    unzip(file, ...)
+  } else {
+    untar(file, ...)
+  }
+}
