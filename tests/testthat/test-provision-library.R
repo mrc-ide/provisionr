@@ -86,3 +86,8 @@ test_that("auxillary library", {
   expect_true("curl" %in% dir(lib1))
   expect_false("curl" %in% dir(lib2))
 })
+
+test_that("no library", {
+  expect_error(provision_library("R6", character(0)),
+               "'lib' must have at least one element")
+})

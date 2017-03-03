@@ -77,7 +77,7 @@ provision_library <- function(packages, lib,
   }
 
   assert_character(lib)
-  if (length(lib) < 0L) {
+  if (length(lib) == 0L) {
     stop("'lib' must have at least one element")
   }
   lib_check <- lib
