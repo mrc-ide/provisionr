@@ -25,6 +25,13 @@ test_that("own platform, multiple packages", {
   expect_gt(length(dir(lib)), 1)
 })
 
+test_that("no packages", {
+  expect_null(provision_library(NULL, stop("don't reference this")))
+  expect_null(provision_library(character(0), stop("don't reference this")))
+  expect_error(provision_library("x", stop("don't reference this")),
+               "don't reference this")
+})
+
 test_that("cross, single package, not compiled", {
   lib <- tempfile()
   res <- provision_library("R6", lib, platform = "windows")

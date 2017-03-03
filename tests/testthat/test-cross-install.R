@@ -84,17 +84,26 @@ test_that("cross install package that triggers load", {
   src <- package_sources(local = "lazyproblem")
   drat <- src$build()
 
+  lib_us <- tempfile()
+  lib_other <- tempfile()
+  on.exit(unlink(c(lib_us, lib_other), recursive = TRUE))
+
   ## Need to get a copy of a binary package that will conflict loaded
   ## for lazyloading to fail.
-  lib_us <- tempfile()
   provision_library("ape", lib_us, quiet = TRUE)
   expect_true("ape" %in% dir(lib_us))
 
-  lib_other <- tempfile()
+  ## TODO: consider doing the target platform differently here; go with
+  ##
+  ##   platform_other <- if (is_windows()) "macosx/mavericks" else "windows"
+  ##
+  ## but I think that requires a bit more support and to make sure
+  ## that the mac local cran is downloaded.
+  platform_other <- "windows"
   withr::with_libpaths(
     lib_us,
-    provision_library("lazyproblem", lib_other,
-                      platform = "windows", src = drat))
+    provision_library("lazyproblem", lib_other, platform = platform_other,
+                      src = drat))
 
   pkgs <- .packages(TRUE, lib_other)
   expect_equal(sort(pkgs), sort(c("ape", "lazyproblem")))

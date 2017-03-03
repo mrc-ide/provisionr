@@ -64,6 +64,30 @@ test_that("build (github)", {
   expect_equal(dat$Package, "kitten")
 })
 
+test_that("build (github subdir)", {
+  src <- package_sources(github = "richfitz/provisionr/tests/testthat/hello")
+  expect_null(src$local_drat)
+
+  src$local_drat <- tempfile()
+  ret <- src$build()
+  expect_true(file.exists(src$local_drat))
+
+  dat <- drat_storr(src$local_drat)$get(src$spec)
+  expect_equal(dat$Package, "hello")
+})
+
+test_that("build (file url)", {
+  skip("not implemented")
+  pkgs <- available.packages(file_url(contrib.url("local_cran", "source")))
+  x <- as.list(pkgs["R6", ])
+  url <- file.path(x$Repository, sprintf("%s_%s.tar.gz", x$Package, x$Version))
+
+  ## This is not supported in package_sources!
+  src <- package_sources(url = url)
+  expect_null(src$local_drat)
+
+})
+
 test_that("supplied cran", {
   src <- package_sources(cran = "http://mycran.com")
   expect_equal(src$cran, "http://mycran.com")
@@ -130,6 +154,11 @@ test_that("expire", {
   Sys.sleep(dt)
   expect_true(src$needs_build())
   expect_match(as.character(src), "expired:", fixed = TRUE, all = FALSE)
+})
+
+test_that("expire must be positive", {
+  expect_error(package_sources(local = "hello", expire = -1),
+               "'expire' must be positive")
 })
 
 test_that("export", {
