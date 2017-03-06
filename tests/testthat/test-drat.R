@@ -4,7 +4,7 @@ test_that("build drat", {
   path <- tempfile()
   dir.create(path)
   specs <- "github::richfitz/odin"
-  ans <- drat_build(specs, path)
+  ans <- drat_build(specs, path, FALSE)
 
   expect_is(ans, "list")
   expect_true(specs %in% names(ans))
