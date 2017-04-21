@@ -131,6 +131,8 @@ test_that("update", {
   src$build(TRUE)
   expect_equal(db$get(src$spec), d1)
 
+  Sys.sleep(1) # moves the timestamp along
+
   src$build(TRUE, TRUE)
   d2 <- db$get(src$spec)
   expect_false(identical(d1, d2))

@@ -187,7 +187,7 @@ prepare_repos <- function(src) {
   if (is.null(src$cran)) {
     r <- sanitise_options_cran()
   } else {
-    r <- c(src$cran)
+    r <- setNames(src$cran, rep("CRAN", length(src$cran)))
   }
 
   ## Repos are ordered from highest to lowest priority;
@@ -207,7 +207,7 @@ prepare_repos <- function(src) {
 }
 
 sanitise_options_cran <- function() {
-  r <- getOption("repos", "https://cran.rstudio.com")
+  r <- getOption("repos", c(CRAN = "https://cran.rstudio.com"))
   if ("@CRAN@" %in% r) {
     r[r == "@CRAN@"] <- "https://cran.rstudio.com"
   }

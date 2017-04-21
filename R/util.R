@@ -82,3 +82,7 @@ extract <- function(file, ...) {
     untar(file, ...)
   }
 }
+
+string_starts_with <- function(a, b) {
+  substr(a, 1, nchar(b)) == b
+}

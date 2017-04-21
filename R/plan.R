@@ -45,20 +45,27 @@ plan_installation <- function(packages, db, lib, installed_action) {
   v_bin <- nv(db$bin[match(packages, db$bin), "Version"])
   v_src <- nv(db$src[match(packages, db$src), "Version"])
   avoid_bin <- intersect(packages[v_src > v_bin], rownames(db$bin))
+
   if (length(avoid_bin) > 0L) {
-    ## TODO: should this be made conditional on the packages coming from
-    ## different repositories (to avoid the case of packages being
-    ## upgraded on CRAN?).  It's really only a big problem for packages
-    ## that need compilation but I don't want to have to compile more
-    ## things than necessary...
-    ##
-    ## either use a re, or use urltools::url_parse, to check to see
-    ## whether these are at the same repo, perhaps?
-    ##
-    ## re <- "(.*?)://(/?[^/]+)(/.*)"
-    ## repo_bin <- db$bin[avoid_bin, "Repository"]
-    ## repo_src <- db$src[avoid_bin, "Repository"]
-    db$bin <- db$bin[-match(avoid_bin, rownames(db$bin)), ]
+    is_from_cran <- function(p, cran) {
+      if (length(cran) == 0L) {
+        FALSE
+      } else {
+        any(string_starts_with(db$bin[p, "Repository"], cran) &
+            string_starts_with(db$bin[p, "Repository"], cran))
+      }
+    }
+    cran_update <- vlapply(avoid_bin, is_from_cran, db$repos[db$is_cran])
+    if (any(cran_update)) {
+      msg <- sprintf(
+        "Preferring old CRAN binary for %s",
+        paste(sprintf('"%s"', avoid_bin[cran_update]), collapse = ", "))
+      provisionr_log("note", msg)
+      avoid_bin <- avoid_bin[!cran_update]
+    }
+    if (length(avoid_bin) > 0L) {
+      db$bin <- db$bin[-match(avoid_bin, rownames(db$bin)), ]
+    }
   }
 
   compile <- rep_len(FALSE, length(packages))
@@ -162,10 +169,19 @@ available_packages <- function(repos, platform, version) {
          paste(repos[err], collapse = ", "))
   }
 
+  ## This is necessary to avoid trying to build CRAN binaries of
+  ## recently updated packages...
+  if (is.null(names(repos))) {
+    is_cran <- rep(FALSE, length(repos))
+  } else {
+    is_cran <- names(repos) == "CRAN"
+  }
+
   url_src <- contrib_url(repos, "src", NULL)
   if (any(is_local)) {
     lapply(file_unurl(url_src[is_local]), drat_ensure_PACKAGES)
   }
+
   pkgs_src <- available.packages(contrib_url(repos, "src", NULL))
   if (is.null(platform) || platform == "linux") {
     pkgs_bin <- pkgs_src[integer(0), ]
@@ -184,7 +200,8 @@ available_packages <- function(repos, platform, version) {
     pkgs_all <- pkgs_src
   }
   list(all = pkgs_all, src = pkgs_src, bin = pkgs_bin,
-       platform = platform, version = version)
+       platform = platform, version = version,
+       repos = repos, is_cran = is_cran)
 }
 
 contrib_url <- function(repos, platform, version_str) {

@@ -88,5 +88,6 @@ if (!file.exists("local_cran")) {
 } else {
   message("Found local CRAN repository")
 }
-options(repos = c(file_url("local_cran"), "https://cran.rstudio.com"),
+options(repos = c(CRAN = file_url("local_cran"),
+                  CRAN = "https://cran.rstudio.com"),
         install.packages.check.source = "no")

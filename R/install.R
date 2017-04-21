@@ -1,4 +1,3 @@
-## NOTE: this is not a suitable drop-in replacement for
 ## install.packages as semantics around lib and repos are different.
 install_packages <- function(packages, lib, repos, ...,
                              standalone = FALSE,
