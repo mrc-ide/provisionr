@@ -98,3 +98,41 @@ test_that("no library", {
   expect_error(provision_library("R6", character(0)),
                "'lib' must have at least one element")
 })
+
+test_that("use package sources - refresh drat on version increase", {
+  path <- tempfile()
+  dir.create(path)
+  file.copy("hello", path, recursive = TRUE)
+  hello <- file.path(path, "hello")
+  v0 <- read_package_version(hello)
+
+  lib <- tempfile()
+  src <- package_sources(local = hello)
+  res <- provision_library("hello", lib, src = src, quiet = TRUE)
+
+  ## some basic checking:
+  st <- drat_storr(res$package_sources$local_drat)
+  expect_equal(numeric_version(st$get(res$package_sources$spec)$Version), v0)
+  expect_equal(read_package_version(file.path(lib, "hello")), v0)
+
+  expect_false(res$package_sources$needs_build())
+  v1 <- alter_package_version(hello, TRUE)
+  expect_false(res$package_sources$needs_build())
+
+  ## Nothing has been changed here:
+  ans <- provision_library("hello", lib, src = src, quiet = TRUE)
+  expect_equal(numeric_version(st$get(res$package_sources$spec)$Version), v0)
+  expect_equal(read_package_version(file.path(lib, "hello")), v0)
+
+  ## Then try with refresh but no upgrade; still no change
+  ans <- provision_library("hello", lib, src = src, quiet = TRUE,
+                           refresh_drat = TRUE, installed_action = "skip")
+  expect_null(ans)
+  expect_equal(numeric_version(st$get(res$package_sources$spec)$Version), v0)
+  expect_equal(read_package_version(file.path(lib, "hello")), v0)
+
+  ans <- provision_library("hello", lib, src = src, quiet = TRUE,
+                           refresh_drat = TRUE, installed_action = "upgrade")
+  expect_equal(numeric_version(st$get(res$package_sources$spec)$Version), v1)
+  expect_equal(read_package_version(file.path(lib, "hello")), v1)
+})

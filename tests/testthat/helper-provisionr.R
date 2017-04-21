@@ -28,6 +28,10 @@ alter_version <- function(v, increase) {
   if (as_version) v else as.character(v)
 }
 
+read_package_version <- function(path) {
+  numeric_version(read.dcf(file.path(path, "DESCRIPTION"), "Version")[[1]])
+}
+
 make_local_cran <- function() {
   path <- "local_cran"
   packages <- c("devtools", "progress", "ape")

@@ -168,11 +168,9 @@ R6_package_sources <- R6::R6Class(
     }
   ))
 
-prepare_package_sources <- function(src) {
+prepare_package_sources <- function(src, refresh = FALSE) {
   if (inherits(src, "package_sources")) {
-    if (src$needs_build()) {
-      src$build()
-    }
+    src$build(refresh)
   } else if (!is.null(src)) {
     stop("Invalid input for src")
   }

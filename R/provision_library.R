@@ -52,6 +52,11 @@
 ##'   allow packages to be missing that need to be compiled?  The
 ##'   interface here is going to change a bunch, so watch out...
 ##'
+##' @param refresh_drat Logical indicating if the cache of packages
+##'   pointed to by \code{src} should be refreshed.  The other way of
+##'   forcing this would be to pass \code{expire = 0} through to the
+##'   \code{package_sources} argument but this is likely to be tidier.
+##'
 ##' @param quiet Passed through to to \code{\link{install.packages}},
 ##'   indicating if package installation should be done quietly.  With
 ##'   this as \code{FALSE} (the default) rather a lot of output can be
@@ -71,6 +76,7 @@ provision_library <- function(packages, lib,
                               check_dependencies = TRUE,
                               installed_action = "upgrade",
                               allow_missing = FALSE,
+                              refresh_drat = FALSE,
                               quiet = FALSE) {
   if (length(packages) == 0L) {
     return(NULL)
@@ -100,7 +106,7 @@ provision_library <- function(packages, lib,
   ## Then we prepare the 'package_sources' object; this will pull all
   ## required packages into the drat repository (but not build binary
   ## packages)
-  src <- prepare_package_sources(src)
+  src <- prepare_package_sources(src, refresh_drat)
   repos <- prepare_repos(src)
 
   db <- available_packages(repos, platform, version)
@@ -140,6 +146,7 @@ provision_library <- function(packages, lib,
   }
 
   plan$path_lib <- lib
+  plan$package_sources <- src
 
   invisible(plan)
 }

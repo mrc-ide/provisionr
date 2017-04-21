@@ -6,7 +6,7 @@
 \usage{
 provision_library(packages, lib, platform = NULL, version = NULL,
   src = NULL, check_dependencies = TRUE, installed_action = "upgrade",
-  allow_missing = FALSE, quiet = FALSE)
+  allow_missing = FALSE, refresh_drat = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{packages}{A character vector of packages to include}
@@ -55,6 +55,11 @@ any package that is already installed).}
 \code{cross_install} when \code{platform} is non-\code{NULL}),
 allow packages to be missing that need to be compiled?  The
 interface here is going to change a bunch, so watch out...}
+
+\item{refresh_drat}{Logical indicating if the cache of packages
+pointed to by \code{src} should be refreshed.  The other way of
+forcing this would be to pass \code{expire = 0} through to the
+\code{package_sources} argument but this is likely to be tidier.}
 
 \item{quiet}{Passed through to to \code{\link{install.packages}},
 indicating if package installation should be done quietly.  With
