@@ -1,4 +1,5 @@
-plan_installation <- function(packages, db, lib, installed_action) {
+plan_installation <- function(packages, db, lib, installed_action,
+                              local_drat = NULL) {
   if (installed_action == "skip") {
     skip <- .packages(TRUE, lib)
   } else {
@@ -33,7 +34,7 @@ plan_installation <- function(packages, db, lib, installed_action) {
     } else {
       check <- packages
     }
-    packages <- check_version(check, lib, db)
+    packages <- check_version(check, lib, db, local_drat)
   }
 
   ## Check the versions here to prefer source packages where they
@@ -248,11 +249,11 @@ valid_platforms <- function() {
   c("windows", "macosx", "macosx/mavericks", "linux")
 }
 
-check_version <- function(packages, lib, db) {
-  installed <- packages %in% .packages(TRUE, lib)
-  if (any(installed)) {
-    check <- packages[installed]
-    v_installed <- setNames(numeric_version(
+check_version <- function(packages, lib, db, local_drat) {
+  current <- packages %in% .packages(TRUE, lib)
+  if (any(current)) {
+    check <- packages[current]
+    v_current <- setNames(numeric_version(
       vcapply(file.path(lib, check, "DESCRIPTION"), read.dcf, "Version")),
       check)
     binary <- check %in% rownames(db$bin)
@@ -260,9 +261,32 @@ check_version <- function(packages, lib, db) {
     v_db[binary] <- db$bin[check[binary], "Version"]
     v_db[!binary] <- db$src[check[!binary], "Version"]
     v_db <- numeric_version(v_db)
-    installed[installed] <- v_installed >= v_db
+    current[current] <- v_current >= v_db
+
+    if (any(current) && !is.null(local_drat)) {
+      ## Extra check for non-version-number-indicated change in
+      ## packages that are in the package_source-controlled repo.
+      ## This is not that straightforward to do though as I don't
+      ## always have access to the same fields in installed packages
+      ## and in the storr database. The best I have is for "Packaged"
+      ## field.
+      st <- drat_storr(local_drat) # TODO: save local_drat somewhere
+      dat_drat <- st$mget(st$list())
+      names(dat_drat) <- vcapply(dat_drat, "[[", "Package")
+
+      for (p in intersect(names(dat_drat), packages[current])) {
+        path <- file.path(lib, p, "DESCRIPTION")
+        t_drat <- sub(";.*", "", dat_drat[[p]]$Packaged)
+        t_lib <- sub(";.*", "", drop(read.dcf(path, "Packaged")))
+        if (as.POSIXct(t_drat) > as.POSIXct(t_lib)) {
+          provisionr_log("force",
+                         sprintf("upgrade '%s' as detected newer source", p))
+        }
+        current[packages == p] <- FALSE
+      }
+    }
   }
-  packages[!installed]
+  packages[!current]
 }
 
 plan_force_binary <- function(packages, plan, local_drat) {

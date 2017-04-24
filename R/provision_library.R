@@ -110,7 +110,8 @@ provision_library <- function(packages, lib,
   repos <- prepare_repos(src)
 
   db <- available_packages(repos, platform, version)
-  plan <- plan_installation(packages, db, lib_check, installed_action)
+  plan <- plan_installation(packages, db, lib_check, installed_action,
+                            src$local_drat)
   extra <- setdiff(plan$packages, packages)
   if (length(extra) > 0L) {
     provisionr_log("deps", sprintf("%d extra: %s", length(extra),
@@ -128,8 +129,11 @@ provision_library <- function(packages, lib,
     ## downloading a source CRAN package, updating the version number,
     ## adding to the drat and seeing what happens.  Needs testing on
     ## OSX/Windows though.
-    install_packages2(packages, lib, repos = repos,
-                      error = TRUE, quiet = quiet)
+    pkgs <- intersect(packages, plan$packages)
+    if (length(pkgs) > 0L) {
+      install_packages2(pkgs, lib, repos = repos,
+                        error = TRUE, quiet = quiet)
+    }
   } else {
     ## These are a bit special, and I don't manage to treat these
     ## correctly with the non-cross install, unless the version

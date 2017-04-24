@@ -136,3 +136,50 @@ test_that("use package sources - refresh drat on version increase", {
   expect_equal(numeric_version(st$get(res$package_sources$spec)$Version), v1)
   expect_equal(read_package_version(file.path(lib, "hello")), v1)
 })
+
+test_that("use package sources - refresh on data change", {
+  path <- tempfile()
+  dir.create(path)
+  file.copy("hello", path, recursive = TRUE)
+  hello <- file.path(path, "hello")
+  v0 <- read_package_version(hello)
+
+  lib <- tempfile()
+  src <- package_sources(local = hello)
+  res <- provision_library("hello", lib, src = src, quiet = TRUE)
+
+  ## some basic checking:
+  st <- drat_storr(res$package_sources$local_drat)
+  d1 <- st$get(res$package_sources$spec)
+  b1 <- drop(read.dcf(file.path(lib, "hello", "DESCRIPTION"),
+                      c("Packaged", "Built")))
+  ## Check that things look OK
+  expect_equal(d1$Packaged, b1[["Packaged"]])
+
+  ## Then tweak the package:
+  writeLines("", file.path(hello, "R", "new.R"))
+  expect_false(res$package_sources$needs_build())
+
+  ## Nothing has been changed here:
+  ans <- provision_library("hello", lib, src = src, quiet = TRUE)
+  expect_equal(st$get(res$package_sources$spec), d1)
+
+  ## Then try with refresh but no upgrade; still no change
+  ans <- provision_library("hello", lib, src = src, quiet = TRUE,
+                           refresh_drat = TRUE, installed_action = "skip")
+  expect_null(ans)
+  expect_equal(st$get(res$package_sources$spec), d1)
+
+  ## Then actually do it:
+  ans <- provision_library("hello", lib, src = src, quiet = TRUE,
+                           refresh_drat = TRUE, installed_action = "upgrade")
+  ## The drat package has been upgraded:
+  d2 <- st$get(res$package_sources$spec)
+  expect_false(d1$md5 == d2$md5)
+  expect_gt(as.numeric(d2$timestamp), as.numeric(d1$timestamp))
+
+  ## But has the library?
+  b2 <- drop(read.dcf(file.path(lib, "hello", "DESCRIPTION"),
+                      c("Packaged", "Built")))
+  expect_true(!identical(b1, b2))
+})
