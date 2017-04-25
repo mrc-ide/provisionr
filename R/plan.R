@@ -53,7 +53,7 @@ plan_installation <- function(packages, db, lib, installed_action,
         FALSE
       } else {
         any(string_starts_with(db$bin[p, "Repository"], cran) &
-            string_starts_with(db$bin[p, "Repository"], cran))
+            string_starts_with(db$src[p, "Repository"], cran))
       }
     }
     cran_update <- vlapply(avoid_bin, is_from_cran, db$repos[db$is_cran])
