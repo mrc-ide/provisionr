@@ -253,9 +253,9 @@ check_version <- function(packages, lib, db, local_drat) {
   current <- packages %in% .packages(TRUE, lib)
   if (any(current)) {
     check <- packages[current]
-    v_current <- setNames(numeric_version(
-      vcapply(file.path(lib, check, "DESCRIPTION"), read.dcf, "Version")),
-      check)
+
+    desc <- setNames(file.path(find.package(check, lib), "DESCRIPTION"), check)
+    v_current <- numeric_version(vcapply(desc, read.dcf, "Version"))
     binary <- check %in% rownames(db$bin)
     v_db <- setNames(character(length(check)), check)
     v_db[binary] <- db$bin[check[binary], "Version"]
@@ -270,19 +270,18 @@ check_version <- function(packages, lib, db, local_drat) {
       ## always have access to the same fields in installed packages
       ## and in the storr database. The best I have is for "Packaged"
       ## field.
-      st <- drat_storr(local_drat) # TODO: save local_drat somewhere
+      st <- drat_storr(local_drat)
       dat_drat <- st$mget(st$list())
       names(dat_drat) <- vcapply(dat_drat, "[[", "Package")
 
       for (p in intersect(names(dat_drat), packages[current])) {
-        path <- file.path(lib, p, "DESCRIPTION")
         t_drat <- sub(";.*", "", dat_drat[[p]]$Packaged)
-        t_lib <- sub(";.*", "", drop(read.dcf(path, "Packaged")))
+        t_lib <- sub(";.*", "", drop(read.dcf(desc[[p]], "Packaged")))
         if (as.POSIXct(t_drat) > as.POSIXct(t_lib)) {
           provisionr_log("force",
                          sprintf("upgrade '%s' as detected newer source", p))
+          current[packages == p] <- FALSE
         }
-        current[packages == p] <- FALSE
       }
     }
   }
