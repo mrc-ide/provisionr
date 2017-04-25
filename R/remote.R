@@ -155,7 +155,7 @@ github_build_package <- function(x) {
 
 github_url_zip <- function(x) {
   sprintf("https://github.com/%s/%s/archive/%s.zip",
-          x$username, x$repo, x$branch %||% "master")
+          x$username, x$repo, x$ref %||% "master")
 }
 
 github_url_zip_api <- function(x) {
@@ -165,7 +165,7 @@ github_url_zip_api <- function(x) {
 
 github_url_description <- function(x) {
   ret <- sprintf("https://raw.githubusercontent.com/%s/%s/%s",
-                 x$username, x$repo, x$branch %||% "master")
+                 x$username, x$repo, x$ref %||% "master")
   if (!is.null(x$subdir)) {
     ret <- file.path(ret, x$subdir)
   }
