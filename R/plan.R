@@ -5,17 +5,19 @@ plan_installation <- function(packages, db, lib, installed_action,
   } else {
     skip <- NULL
   }
-  skip <- c(skip, base_packages())
-  requested <- packages
+  base <- base_packages()
+  builtin <- builtin_packages()
+  requested <- setdiff(packages, base_packages())
+  available <- union(.packages(TRUE, lib), builtin)
 
   ## TODO: drop the setdiff here, which also drops the lib argument?
-  msg <- setdiff(packages, c(db$all[, "Package"], skip))
+  msg <- setdiff(packages, c(db$all[, "Package"], c(skip, base)))
   if (length(msg) > 0L) {
     stop(sprintf("Can't find installation candidate for: %s",
                  paste(msg, collapse = ", ")))
   }
 
-  packages <- setdiff(recursive_deps(packages, db$all), skip)
+  packages <- setdiff(recursive_deps(packages, db$all), base)
   msg <- setdiff(packages, db$all[, "Package"])
   if (length(msg) > 0L) {
     stop(sprintf("Can't find installation candidate for dependencies: %s",
@@ -23,14 +25,14 @@ plan_installation <- function(packages, db, lib, installed_action,
   }
 
   if (installed_action == "skip") {
-    packages <- setdiff(packages, .packages(TRUE, lib))
+    packages <- setdiff(packages, available)
   }
 
   binary <- packages %in% rownames(db$bin)
 
   if (installed_action == "upgrade" || installed_action == "upgrade_all") {
     if (installed_action == "upgrade") {
-      check <- union(setdiff(packages, .packages(TRUE, lib)), requested)
+      check <- union(setdiff(packages, available), requested)
     } else {
       check <- packages
     }
@@ -89,15 +91,15 @@ check_installed_packages <- function(packages, lib, cols = NULL) {
   if (is.null(cols)) {
     cols <- c("Depends", "Imports")
   }
-  ## TODO: this also suffers issues with upgraded "recommended"
-  ## packages, version requirements, etc.  Possibly this could all be
-  ## factored into it's own little thing.
-  base <- base_packages()
 
-  installed <- .packages(TRUE, lib)
-  missing <- setdiff(setdiff(packages, base), installed)
-  check <- setdiff(packages, c(missing, base))
-  checked <- base
+  ## packages we do not *need* to see in the library
+  builtin <- builtin_packages()
+  ## packages that we can see in the library
+  installed <- union(.packages(TRUE, lib), builtin)
+  ## packages known to be missing
+  missing <- setdiff(packages, installed)
+  check <- setdiff(packages, missing)
+  checked <- installed
 
   while (length(check) > 0L) {
     p <- check[[1L]]
@@ -132,6 +134,10 @@ find_description <- function(p, lib) {
 ## survival (a recommended package) is manually updated.  So going
 ## through versions might fix things.
 base_packages <- function() {
+  rownames(installed.packages(priority = "base"))
+}
+
+builtin_packages <- function() {
   rownames(installed.packages(priority = c("base", "recommended")))
 }
 

@@ -183,3 +183,49 @@ test_that("use package sources - refresh on data change", {
                       c("Packaged", "Built")))
   expect_true(!identical(b1, b2))
 })
+
+test_that("deal with base packages - only base present", {
+  lib <- tempfile()
+  res <- provision_library("stats", lib, quiet = TRUE)
+  expect_equal(res$packages, character(0))
+  expect_equal(dir(lib), character(0))
+})
+
+test_that("deal with base packages - mix of packages present", {
+  lib <- tempfile()
+  res <- provision_library(c("R6", "stats"), lib, quiet = TRUE)
+  expect_equal(res$packages, "R6")
+  expect_equal(dir(lib), "R6")
+})
+
+test_that("upgrade recommended package", {
+  lib <- tempfile()
+  src <- package_sources(local = "deprec")
+  res <- provision_library("deprec", lib, src = src, quiet = TRUE)
+  expect_equal(dir(lib), "deprec")
+
+  ## Then we install codetools in there:
+  res <- provision_library("codetools", lib, quiet = TRUE)
+  expect_equal(sort(dir(lib)), sort(c("codetools", "deprec")))
+
+  path <- file.path(lib, "codetools")
+  v0 <- read_package_version(path)
+  v1 <- alter_package_version(path, FALSE)
+
+  ## 1. skip:
+  res <- provision_library("deprec", lib, src = src, quiet = TRUE)
+  expect_equal(res$packages, character(0))
+  expect_equal(read_package_version(path), v1)
+
+  ## 2. upgrade
+  res <- provision_library("deprec", lib, src = src, quiet = TRUE,
+                           installed_action = "upgrade")
+  expect_equal(res$packages, character(0))
+  expect_equal(read_package_version(path), v1)
+
+  ## 3. upgrade_all
+  res <- provision_library("deprec", lib, src = src, quiet = TRUE,
+                           installed_action = "upgrade_all")
+  expect_equal(res$packages, "codetools")
+  expect_equal(read_package_version(path), v0)
+})
