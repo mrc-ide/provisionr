@@ -34,7 +34,7 @@ read_package_version <- function(path) {
 
 make_local_cran <- function() {
   path <- "local_cran"
-  packages <- c("devtools", "progress", "ape")
+  packages <- c("devtools", "progress", "ape", "lattice", "nlme")
   dir.create(path, FALSE, TRUE)
   on.exit(unlink(path, recursive = TRUE))
 
