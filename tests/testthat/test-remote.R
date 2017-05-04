@@ -60,6 +60,24 @@ test_that("errors", {
                "Invalid remote source 'bitbucket'")
 })
 
+test_that("branch", {
+  spec <- "username/repo"
+  expect_equal(
+    github_url_zip(parse_remote(spec)),
+    "https://github.com/username/repo/archive/master.zip")
+  expect_equal(
+    github_url_description(parse_remote(spec)),
+    "https://raw.githubusercontent.com/username/repo/master/DESCRIPTION")
+
+  spec <- "username/repo@branch"
+  expect_equal(
+    github_url_zip(parse_remote(spec)),
+    "https://github.com/username/repo/archive/branch.zip")
+  expect_equal(
+    github_url_description(parse_remote(spec)),
+    "https://raw.githubusercontent.com/username/repo/branch/DESCRIPTION")
+})
+
 test_that("split spec", {
   expect_equal(split_spec("foo::bar"), cbind(type = "foo", value = "bar"))
   expect_equal(split_spec("url::http://foo"),
