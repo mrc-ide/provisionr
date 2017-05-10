@@ -199,6 +199,18 @@ available_packages <- function(repos, platform, version) {
       lapply(file_unurl(url_bin[is_local]), drat_ensure_PACKAGES)
     }
     pkgs_bin <- available.packages(url_bin)
+
+    if (check_r_version(version)[1, 1:2] < r_oldrel()[1, 1:2]) {
+      ## Here are might have trouble with windows binaries so I am
+      ## going to filter out old ones.  This might be too agressive
+      ## but it should hopefully do the trick.
+      provisionr_log("note",
+                     "filtering outdated binary versions for old R version")
+      check <- intersect(rownames(pkgs_bin), rownames(pkgs_src))
+      outdated <- check[numeric_version(pkgs_bin[check, "Version"]) <
+                        numeric_version(pkgs_src[check, "Version"])]
+      pkgs_bin <- pkgs_bin[!(rownames(pkgs_bin) %in% outdated), , drop = FALSE]
+    }
   }
   extra <- setdiff(rownames(pkgs_bin), rownames(pkgs_src))
   if (length(extra) > 0L) {
@@ -316,4 +328,12 @@ print.provisionr_plan <- function(x, ...) {
                   initial = " - packages: ", exdent = 13)
   cat(paste0(pkgs, "\n", collapse = ""))
   invisible(x)
+}
+
+cache <- new.env(parent = emptyenv())
+r_oldrel <- function() {
+  if (is.null(cache$r_oldrel)) {
+    cache$r_oldrel <- numeric_version(rversions::r_oldrel()[["version"]])
+  }
+  cache$r_oldrel
 }

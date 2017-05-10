@@ -11,6 +11,7 @@ Imports:
     drat,
     prettyunits,
     remotes,
+    rversions,
     storr (>= 1.1.0),
     withr
 Suggests:
