@@ -141,10 +141,11 @@ builtin_packages <- function() {
   rownames(installed.packages(priority = c("base", "recommended")))
 }
 
-recursive_deps <- function(x, db) {
+recursive_deps <- function(x, db, suggests = FALSE) {
   done <- character()
   base <- base_packages()
-  cols <- c("Depends", "Imports", "LinkingTo")
+  cols <- c("Depends", "Imports", "LinkingTo",
+            if (suggests) "Suggests")
 
   while (length(x) > 0L) {
     done <- c(done, x)
@@ -336,4 +337,11 @@ r_oldrel <- function() {
     cache$r_oldrel <- numeric_version(rversions::r_oldrel()[["version"]])
   }
   cache$r_oldrel
+}
+
+r_release <- function() {
+  if (is.null(cache$r_release)) {
+    cache$r_release <- numeric_version(rversions::r_release()[["version"]])
+  }
+  cache$r_release
 }

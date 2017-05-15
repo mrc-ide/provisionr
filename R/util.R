@@ -21,6 +21,12 @@ download_file <- function(url, ..., progress = NULL, destfile = NULL,
   destfile
 }
 
+download_file2 <- function(url, destfile, ...) {
+  tmp <- download_file(url, ...)
+  on.exit(file.remove(tmp))
+  file.copy(tmp, destfile, overwrite = TRUE)
+}
+
 `%||%` <- function(a, b) {
   if (is.null(a)) b else a
 }
