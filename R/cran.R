@@ -18,6 +18,7 @@ download_cran <- function(packages, path, r_version = NULL,
   db <- available_packages(repos, platform, version)
 
   pkgs <- recursive_deps(packages, db$all, suggests)
+  pkgs <- setdiff(pkgs, base_packages())
 
   ## source packages:
   dest_src <- contrib_url(path, "src", version_str)
