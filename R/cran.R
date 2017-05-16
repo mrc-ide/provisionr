@@ -109,7 +109,10 @@ download_packages <- function(pkgs, destdir, available, type) {
   url <- package_url(pkgs, available, type)
 
   dest_file <- file.path(destdir, basename(url))
-  ## TODO: be noisier about skipping missing URLs!
+  if (any(is.na(url))) {
+    message(sprintf("Skipping packages (type: %s) for packages: %s",
+                    type, paste(pkgs[is.na(url)], collapse = ", ")))
+  }
   fetch <- url[!file.exists(dest_file) & !is.na(url)]
 
   is_local <- grepl("file://", fetch)
