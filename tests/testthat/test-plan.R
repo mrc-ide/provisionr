@@ -3,7 +3,7 @@ context("plan")
 test_that("upgraded CRAN package", {
   lib <- tempfile()
 
-  db <- available_packages(c(CRAN = "https://cran.rstudio.com"), "windows",
+  db <- package_database(c(CRAN = "https://cran.rstudio.com"), "windows",
                            NULL)
   packages <- "devtools"
   plan <- plan_installation(packages, db, lib, "upgrade")
@@ -21,7 +21,7 @@ test_that("upgraded CRAN package", {
 
 test_that("plan", {
   lib <- tempfile()
-  db <- available_packages(getOption("repos")[1], "windows", NULL)
+  db <- package_database(getOption("repos")[1], "windows", NULL)
   packages <- "devtools"
   plan <- plan_installation(packages, db, lib, "upgrade")
   expect_is(plan, "provisionr_plan")

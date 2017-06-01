@@ -2,7 +2,7 @@ context("cross_install")
 
 test_that("binary cross install", {
   lib <- tempfile()
-  db <- available_packages("https://cran.rstudio.com", "windows", NULL)
+  db <- package_database("https://cran.rstudio.com", "windows", NULL)
   packages <- "ape"
   plan <- plan_installation(packages, db, lib, "upgrade")
   res <- cross_install_packages("ape", lib, db, plan)
@@ -12,7 +12,7 @@ test_that("binary cross install", {
 
 test_that("binary cross install with deps", {
   lib <- tempfile()
-  db <- available_packages("https://cran.rstudio.com", "windows", NULL)
+  db <- package_database("https://cran.rstudio.com", "windows", NULL)
   packages <- "devtools"
   plan <- plan_installation(packages, db, lib, "upgrade")
   res <- cross_install_packages(packages, lib, db, plan)
@@ -184,7 +184,7 @@ test_that("don't cross install locally", {
 
 test_that("missing packages", {
   lib <- tempfile()
-  db <- available_packages("https://cran.rstudio.com", "windows", NULL)
+  db <- package_database("https://cran.rstudio.com", "windows", NULL)
 
   expect_error(plan_installation("foobar", db, lib, "skip"),
                "Can't find installation candidate for: foobar")
@@ -202,7 +202,7 @@ test_that("missing packages", {
 test_that("remove existing packages on upgrade", {
   packages <- "ape"
   lib <- tempfile()
-  db <- available_packages(getOption("repos")[[1L]], "windows", NULL)
+  db <- package_database(getOption("repos")[[1L]], "windows", NULL)
   plan <- plan_installation(packages, db, lib, "replace")
   cross_install_packages(packages, lib, db, plan)
 

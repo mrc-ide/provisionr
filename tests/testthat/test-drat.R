@@ -84,7 +84,7 @@ test_that("binary package", {
   expect_message(src$build(), "drat")
   expect_silent(src$build())
 
-  db <- available_packages(src$local_drat, "windows", NULL)
+  db <- package_database(src$local_drat, "windows", NULL)
   expect_equal(nrow(db$src), 0)
   expect_equal(nrow(db$bin), 1)
   expect_equal(rownames(db$bin), "ape")

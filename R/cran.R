@@ -1,5 +1,7 @@
+## TODO: decide what a vectorised interface to version and type looks
+## like here, especially with the macosx shit show.
 download_cran <- function(packages, path, r_version = NULL,
-                          platform = "windows",
+                          type = "windows",
                           suggests = FALSE,
                           package_sources = NULL) {
   version <- check_r_version(r_version)
@@ -7,29 +9,34 @@ download_cran <- function(packages, path, r_version = NULL,
 
   dir.create(path, FALSE, TRUE)
 
+  browser()
   src <- prepare_package_sources(package_sources, FALSE)
   repos <- prepare_repos(src)
 
-  if (!identical(as.vector(platform), "windows")) {
+  if (!identical(as.vector(type), "windows")) {
     stop("not yet implemented")
   }
-  binary_type <- "win.binary"
+  binary_type <- binary_type(type)
 
-  db <- available_packages(repos, platform, version)
+  ## TODO: change this to suck less.
+  url_src <- contrib_url(repos, "src", NULL)
+  db <- available_packages(url_src)
 
-  pkgs <- recursive_deps(packages, db$all, suggests)
+  ## TODO: this will fail in the (very) unlikely situation where there
+  ## are binary only packages to deal with.
+  pkgs <- recursive_deps(packages, db, suggests)
   pkgs <- setdiff(pkgs, base_packages())
 
   ## source packages:
   dest_src <- contrib_url(path, "src", version_str)
   dir.create(dest_src, FALSE, TRUE)
-  res <- download_packages(pkgs, dest_src, db$src, "source")
+  res <- download_packages(pkgs, dest_src, db, "source")
   if (res) {
     tools::write_PACKAGES(dest_src, type = "source")
   }
 
   ## Then binary:
-  dest_bin <- contrib_url(path, platform, version_str)
+  dest_bin <- contrib_url(path, type, version_str)
   dir.create(dest_bin, FALSE, TRUE)
   res <- download_packages(pkgs, dest_bin, db$bin, binary_type)
   if (res) {
@@ -39,8 +46,8 @@ download_cran <- function(packages, path, r_version = NULL,
   path
 }
 
-download_r <- function(path, platform = "windows", r_version = NULL) {
-  if (platform != "windows") {
+download_r <- function(path, type = "windows", r_version = NULL) {
+  if (type != "windows") {
     stop("Not yet implemented")
   }
   dir.create(path, FALSE, TRUE)
@@ -138,4 +145,13 @@ package_ext <- function(type) {
   } else {
     "tar.gz"
   }
+}
+
+binary_type <- function(type) {
+  switch(type,
+         src = "source",
+         windows = "win.binary",
+         "macosx" = "mac.binary",
+         "macosx/mavericks" = "mac.binary.mavericks",
+         "macosx/el-capitan" = "mac.binary.el-capitan")
 }

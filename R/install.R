@@ -25,7 +25,7 @@ install_packages <- function(packages, lib, repos, ...,
     ## strictly, we should pass in check_dependencies here I think.
     packages <- check_installed_packages(packages, lib)
   } else {
-    db <- available_packages(repos, NULL, NULL)
+    db <- package_database(repos, NULL, NULL)
     ## TODO: a different plan will be needed here when not creating a
     ## standalong repo; probably the biggest difference will be that
     ## 'lib' should be a vector of libraries to look in.

@@ -54,6 +54,10 @@ file_unurl <- function(url) {
   }
 }
 
+is_file_url <- function(x) {
+  grepl("^file://", x)
+}
+
 is_directory <- function(path) {
   file.info(path, extra_cols = FALSE)$isdir
 }
@@ -91,4 +95,14 @@ extract <- function(file, ...) {
 
 string_starts_with <- function(a, b) {
   substr(a, 1, nchar(b)) == b
+}
+
+clean_matrix <- function(m, cols) {
+  msg <- setdiff(cols, colnames(m))
+  if (length(msg) > 0L) {
+    extra <- matrix(m[integer(0)], nrow(m), length(msg),
+                    dimnames = list(NULL, msg))
+    m <- cbind(m, extra)
+  }
+  m[, cols, drop = FALSE]
 }

@@ -41,7 +41,7 @@ make_local_cran <- function() {
   version <- check_r_version(NULL)
   version_str <- r_version_str(version)
   repo <- "https://cran.rstudio.com"
-  db <- available_packages(repo, "windows", NULL)
+  db <- package_database(repo, "windows", NULL)
 
   pkgs <- recursive_deps(packages, db$all)
 
@@ -63,7 +63,7 @@ make_local_cran <- function() {
   ## provisioning a mac system (yet).
   if (is_mac()) {
     mac_platform <- "macosx/mavericks"
-    db_mac <- available_packages(repo, mac_platform, NULL)
+    db_mac <- package_database(repo, mac_platform, NULL)
     dest_bin_mac <- contrib_url(path, mac_platform, version_str)
     dir.create(dest_bin_mac, FALSE, TRUE)
     download.packages(pkgs, dest_bin_mac, db_mac$bin, repo, url_bin,

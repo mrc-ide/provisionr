@@ -109,7 +109,7 @@ provision_library <- function(packages, lib,
   src <- prepare_package_sources(src, refresh_drat)
   repos <- prepare_repos(src)
 
-  db <- available_packages(repos, platform, version)
+  db <- package_database(repos, platform, version)
   plan <- plan_installation(packages, db, lib_check, installed_action,
                             src$local_drat)
   extra <- setdiff(plan$packages, packages)

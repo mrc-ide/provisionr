@@ -156,93 +156,6 @@ recursive_deps <- function(x, db, suggests = FALSE) {
   sort(unique(done))
 }
 
-## TODO: memoise this because it's quite slow
-available_packages <- function(repos, platform, version) {
-  provisionr_log("download", "package database")
-
-  if (!is.null(platform)) {
-    platform <- match_value(platform, valid_platforms())
-  }
-
-  is_local <- grepl("^(/|[A-Za-z]:|file://)", repos)
-  if (any(is_local)) {
-    i <- file.exists(repos)
-    if (any(i)) {
-      repos[i] <- file_url(repos[i])
-    }
-  }
-  err <- !grepl("^[a-z]+://", repos)
-  if (any(err)) {
-    stop("Not all repos resolvable as urls: ",
-         paste(repos[err], collapse = ", "))
-  }
-
-  ## This is necessary to avoid trying to build CRAN binaries of
-  ## recently updated packages...
-  if (is.null(names(repos))) {
-    is_cran <- rep(FALSE, length(repos))
-  } else {
-    is_cran <- names(repos) == "CRAN"
-  }
-
-  url_src <- contrib_url(repos, "src", NULL)
-  if (any(is_local)) {
-    lapply(file_unurl(url_src[is_local]), drat_ensure_PACKAGES)
-  }
-
-  pkgs_src <- available.packages(contrib_url(repos, "src", NULL))
-  if (is.null(platform) || platform == "linux") {
-    pkgs_bin <- pkgs_src[integer(0), ]
-  } else {
-    version_str <- r_version_str(check_r_version(version), 2L)
-    url_bin <- contrib_url(repos, platform, version_str)
-    if (any(is_local)) {
-      lapply(file_unurl(url_bin[is_local]), drat_ensure_PACKAGES)
-    }
-    pkgs_bin <- available.packages(url_bin)
-
-    if (check_r_version(version)[1, 1:2] < r_oldrel()[1, 1:2]) {
-      ## Here are might have trouble with windows binaries so I am
-      ## going to filter out old ones.  This might be too agressive
-      ## but it should hopefully do the trick.
-      provisionr_log("note",
-                     "filtering outdated binary versions for old R version")
-      check <- intersect(rownames(pkgs_bin), rownames(pkgs_src))
-      outdated <- check[numeric_version(pkgs_bin[check, "Version"]) <
-                        numeric_version(pkgs_src[check, "Version"])]
-      pkgs_bin <- pkgs_bin[!(rownames(pkgs_bin) %in% outdated), , drop = FALSE]
-    }
-  }
-  extra <- setdiff(rownames(pkgs_bin), rownames(pkgs_src))
-  if (length(extra) > 0L) {
-    pkgs_all <- rbind(pkgs_src, pkgs_bin[extra, ])
-  } else {
-    pkgs_all <- pkgs_src
-  }
-  list(all = pkgs_all, src = pkgs_src, bin = pkgs_bin,
-       platform = platform, version = version,
-       repos = repos, is_cran = is_cran)
-}
-
-contrib_url <- function(repos, platform, version_str) {
-  if (is.null(version_str)) {
-    version_str <- r_version_str(check_r_version(version_str))
-  }
-  assert_scalar_character("platform")
-  ## platform should be:
-  ##   src
-  ##   windows
-  ##   macosx
-  ##   macosx/mavericks
-  if (platform == "src") {
-    path <- "src/contrib"
-  } else {
-    match_value(platform, setdiff(valid_platforms(), "linux"))
-    path <- file.path("bin", platform, "contrib", version_str)
-  }
-  file.path(sub("/$", "", repos), path)
-}
-
 parse_deps <- function(x) {
   ## TODO: This does not support returning version numbers (so
   ## depending on particular versions of packages is not going to work
@@ -256,6 +169,31 @@ parse_deps <- function(x) {
   val[val != "R"]
 }
 
+parse_deps_version <- function(x) {
+  xx <- strsplit(trimws(sub("\n", " ", x, fixed = TRUE)),
+                 "\\s*,\\s*", perl = TRUE)
+  re <- "^([^\\s(]+)\\s*(.*)"
+  xx[vlapply(xx, identical, NA_character_)] <- list(character(0))
+
+  i <- lengths(xx, FALSE)
+  j <- factor(rep(seq_along(i), i), seq_along(i))
+
+  s <- unlist(xx, use.names = FALSE)
+  pkg <- sub(re, "\\1", s, perl = TRUE)
+  ver <- sub(re, "\\2", s, perl = TRUE)
+  ver[!nzchar(ver)] <- NA_character_
+  re_ver <- "^\\(([^\\s]+)\\s+([^)]+)\\)"
+  op <- sub(re_ver, "\\1", ver, perl = TRUE)
+  ver <- sub(re_ver, "\\2", ver, perl = TRUE)
+
+  dat <- cbind(name = pkg, operator = op, version = ver)
+  ret <- lapply(split(dat, j), matrix, ncol = 3, dimnames = dimnames(dat))
+  if (!is.null(names(x))) {
+    names(ret) <- names(x)
+  }
+  ret
+}
+
 drat_ensure_PACKAGES <- function(path) {
   path_PACKAGES <- file.path(path, "PACKAGES")
   if (!file.exists(path_PACKAGES)) {
@@ -264,8 +202,14 @@ drat_ensure_PACKAGES <- function(path) {
   }
 }
 
-valid_platforms <- function() {
-  c("windows", "macosx", "macosx/mavericks", "linux")
+valid_platforms <- function(version = NULL) {
+  version2 <- check_r_version(version)[1, 1:2]
+  c("windows",
+    "linux",
+    if (version2 <= numeric_version("3.2")) "macosx",
+    if (version2 >= numeric_version("3.1") &&
+        version2 <= numeric_version("3.3")) "macosx/mavericks",
+    if (version2 >= numeric_version("3.4")) "macosx/el-capitan")
 }
 
 check_version <- function(packages, lib, db, local_drat) {
