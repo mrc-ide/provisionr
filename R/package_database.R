@@ -1,3 +1,5 @@
+## The term "target" here is our installation target type; it's going to be:
+##   src, windows, macos(|/mavericks|/el-capitan)
 package_database <- function(repos, target, version) {
   provisionr_log("download", "package database")
 

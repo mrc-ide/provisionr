@@ -35,11 +35,11 @@ cross_install_package <- function(package, lib, binary, db) {
   dir.create(tmp)
   on.exit(unlink(tmp, recursive = TRUE), add = TRUE)
 
-  platform <- db$platform
+  target <- db$target
   db_use <- db[[if (binary) "bin" else "src"]]
   x <- as.list(db_use[match(package, db_use[, "Package"]), ])
 
-  ext <- if (!binary) "tar.gz" else if (platform == "windows") "zip" else "tgz"
+  ext <- if (!binary) "tar.gz" else if (target == "windows") "zip" else "tgz"
   url <- sprintf("%s/%s_%s.%s", x$Repository, x$Package, x$Version, ext)
 
   if (grepl("file://", url)) {

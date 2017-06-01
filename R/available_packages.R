@@ -115,7 +115,7 @@ read_available_packages <- function(url, use_rds) {
   if (nrow(d) > 0L) {
     rownames(d) <- d[, "Package"]
   }
-  if (!("Repository" %in% colnames(d))) {
+  if (!("Repository" %in% colnames(d)) && nrow(d) > 0) {
     d <- cbind(d, Repository = url)
   }
   d

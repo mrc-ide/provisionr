@@ -2,7 +2,7 @@ context("cross_install")
 
 test_that("binary cross install", {
   lib <- tempfile()
-  db <- package_database("https://cran.rstudio.com", "windows", NULL)
+  db <- package_database(c(CRAN = "https://cran.rstudio.com"), "windows", NULL)
   packages <- "ape"
   plan <- plan_installation(packages, db, lib, "upgrade")
   res <- cross_install_packages("ape", lib, db, plan)
@@ -12,14 +12,15 @@ test_that("binary cross install", {
 
 test_that("binary cross install with deps", {
   lib <- tempfile()
-  db <- package_database("https://cran.rstudio.com", "windows", NULL)
+  db <- package_database(c(CRAN = "https://cran.rstudio.com"),
+                         "windows", NULL)
   packages <- "devtools"
   plan <- plan_installation(packages, db, lib, "upgrade")
   res <- cross_install_packages(packages, lib, db, plan)
   expect_true("devtools" %in% dir(lib))
   expect_true("httr" %in% dir(lib))
   expect_true(file.exists(
-    file.path(lib, "devtools", "libs", "x64", "devtools.dll")))
+    file.path(lib, "git2r", "libs", "x64", "git2r.dll")))
 
   dat <- check_library("devtools", lib)
   expect_equal(dat$missing, character(0))
@@ -184,7 +185,7 @@ test_that("don't cross install locally", {
 
 test_that("missing packages", {
   lib <- tempfile()
-  db <- package_database("https://cran.rstudio.com", "windows", NULL)
+  db <- package_database(c(CRAN = "https://cran.rstudio.com"), "windows", NULL)
 
   expect_error(plan_installation("foobar", db, lib, "skip"),
                "Can't find installation candidate for: foobar")
