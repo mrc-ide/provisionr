@@ -95,8 +95,10 @@ read_available_packages <- function(url, use_rds) {
   } else {
     nm <- paste0("PACKAGES", c(if (use_rds) ".rds", ".gz", ""))
     for (x in nm) {
-      path <- tryCatch(download_file(file.path(url, x), destfile = tempfile()),
-                       error = identity)
+      path <- tryCatch(
+        download_file(file.path(url, x), destfile = tempfile(),
+                      suppress_warnings = TRUE),
+        error = identity)
       if (!inherits(path, "error")) {
         if (x == "PACKAGES.rds") {
           d <- readRDS(path)
