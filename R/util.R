@@ -94,7 +94,11 @@ extract <- function(file, ...) {
 }
 
 string_starts_with <- function(a, b) {
-  substr(a, 1, nchar(b)) == b
+  if (length(b) != 1L) {
+    vlapply(b, string_starts_with, a = a)
+  } else {
+    substr(a, 1, nchar(b)) == b
+  }
 }
 
 clean_matrix <- function(m, cols) {

@@ -54,8 +54,14 @@ plan_installation <- function(packages, db, lib, installed_action,
       if (length(cran) == 0L) {
         FALSE
       } else {
-        any(string_starts_with(db$bin[p, "Repository"], cran) &
-            string_starts_with(db$src[p, "Repository"], cran))
+        ## We could either use
+        ##   any(x & y)
+        ## or
+        ##   any(x) && any(y)
+        ## But the latter performs better when there are two repos
+        ## claiming to be CRAN
+        any(string_starts_with(db$bin[p, "Repository"], cran)) &&
+          any(string_starts_with(db$src[p, "Repository"], cran))
       }
     }
     cran_update <- vlapply(avoid_bin, is_from_cran, db$repos[db$is_cran])
