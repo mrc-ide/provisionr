@@ -34,7 +34,8 @@ read_package_version <- function(path) {
 
 make_local_cran <- function(path = "local_cran") {
   packages <- c("devtools", "progress", "ape", "lattice", "nlme")
-  download_cran(packages, path, NULL, "ALL")
+  src <- package_sources(cran = "https://cran.rstudio.com")
+  download_cran(packages, path, NULL, "ALL", FALSE, src)
 }
 
 ## Try to fetch things from a local cran mirror.  Create this with
