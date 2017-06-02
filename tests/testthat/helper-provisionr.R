@@ -32,46 +32,9 @@ read_package_version <- function(path) {
   numeric_version(read.dcf(file.path(path, "DESCRIPTION"), "Version")[[1]])
 }
 
-make_local_cran <- function() {
-  path <- "local_cran"
+make_local_cran <- function(path = "local_cran") {
   packages <- c("devtools", "progress", "ape", "lattice", "nlme")
-  dir.create(path, FALSE, TRUE)
-  on.exit(unlink(path, recursive = TRUE))
-
-  version <- check_r_version(NULL)
-  version_str <- r_version_str(version)
-  repo <- "https://cran.rstudio.com"
-  db <- package_database(repo, "windows", NULL)
-
-  pkgs <- recursive_deps(packages, db$all)
-
-  url_src <- contrib_url(repo, "src", version_str)
-  url_bin <- contrib_url(repo, "windows", version_str)
-  dest_src <- contrib_url(path, "src", version_str)
-  dest_bin_win <- contrib_url(path, "windows", version_str)
-  dir.create(dest_src, FALSE, TRUE)
-  dir.create(dest_bin_win, FALSE, TRUE)
-
-  download.packages(pkgs, dest_src, db$src, repo, url_src, type = "source")
-  download.packages(pkgs, dest_bin_win, db$bin, repo, url_bin,
-                    type = "win.binary")
-
-  tools::write_PACKAGES(dest_src, type = "source")
-  tools::write_PACKAGES(dest_bin_win, type = "win.binary")
-
-  ## Only bother doing this on a mac, because there are no tests of
-  ## provisioning a mac system (yet).
-  if (is_mac()) {
-    mac_platform <- "macosx/mavericks"
-    db_mac <- package_database(repo, mac_platform, NULL)
-    dest_bin_mac <- contrib_url(path, mac_platform, version_str)
-    dir.create(dest_bin_mac, FALSE, TRUE)
-    download.packages(pkgs, dest_bin_mac, db_mac$bin, repo, url_bin,
-                      type = "mac.binary.mavericks")
-    tools::write_PACKAGES(dest_bin_mac, type = "mac.binary")
-  }
-
-  on.exit()
+  download_cran(packages, path, NULL, "ALL")
 }
 
 ## Try to fetch things from a local cran mirror.  Create this with

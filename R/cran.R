@@ -1,7 +1,8 @@
 ## TODO: decide what a vectorised interface to version and type looks
-## like here, especially with the macosx shit show.
+## like here, especially with the macosx shit show.  I think that
+## "target" is the right call.
 download_cran <- function(packages, path, r_version = NULL,
-                          type = "windows",
+                          target = "windows",
                           suggests = FALSE,
                           package_sources = NULL) {
   version <- check_r_version(r_version)
@@ -9,38 +10,52 @@ download_cran <- function(packages, path, r_version = NULL,
 
   dir.create(path, FALSE, TRUE)
 
-  browser()
   src <- prepare_package_sources(package_sources, FALSE)
   repos <- prepare_repos(src)
 
-  if (!identical(as.vector(type), "windows")) {
-    stop("not yet implemented")
+  if (length(target) > 0L) {
+    valid <- setdiff(valid_targets(version), "linux")
+    if (identical(unname(target), "ALL")) {
+      target <- valid
+    } else {
+      err <- setdiff(target, valid)
+      if (length(err)) {
+        stop("Invalid target %s for R version %s",
+             paste(err, collapse = ", "), as.character(version))
+      }
+    }
+    binary_type <- vcapply(target, binary_type)
   }
-  binary_type <- binary_type(type)
 
   ## TODO: change this to suck less.
   url_src <- contrib_url(repos, "src", NULL)
-  db <- available_packages(url_src)
+  db_src <- available_packages(url_src)
 
   ## TODO: this will fail in the (very) unlikely situation where there
   ## are binary only packages to deal with.
-  pkgs <- recursive_deps(packages, db, suggests)
+  pkgs <- recursive_deps(packages, db_src, suggests)
   pkgs <- setdiff(pkgs, base_packages())
 
   ## source packages:
   dest_src <- contrib_url(path, "src", version_str)
   dir.create(dest_src, FALSE, TRUE)
-  res <- download_packages(pkgs, dest_src, db, "source")
+  res <- download_packages(pkgs, dest_src, db_src, "source")
   if (res) {
     tools::write_PACKAGES(dest_src, type = "source")
   }
 
   ## Then binary:
-  dest_bin <- contrib_url(path, type, version_str)
-  dir.create(dest_bin, FALSE, TRUE)
-  res <- download_packages(pkgs, dest_bin, db$bin, binary_type)
-  if (res) {
-    tools::write_PACKAGES(dest_bin, type = binary_type)
+  for (i in seq_along(target)) {
+    url_bin <- contrib_url(repos, target[[i]], version_str)
+    db_bin <- available_packages(url_bin)
+    dest_bin <- contrib_url(path, target[[i]], version_str)
+    dir.create(dest_bin, FALSE, TRUE)
+    res <- download_packages(pkgs, dest_bin, db_bin, binary_type[[i]])
+    if (res) {
+      ## This is insane:
+      type_write <- sub("^mac.binary.*", "mac.binary", binary_type[[i]])
+      tools::write_PACKAGES(dest_bin, type = type_write)
+    }
   }
 
   path
@@ -143,7 +158,7 @@ package_ext <- function(type) {
   } else if (type == "win.binary") {
     "zip"
   } else {
-    "tar.gz"
+    "tgz"
   }
 }
 
