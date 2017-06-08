@@ -46,4 +46,3 @@ without saving references to \code{provisionr}.}
 \description{
 Collect information on package sources
 }
-

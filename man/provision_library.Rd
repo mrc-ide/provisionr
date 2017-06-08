@@ -76,4 +76,3 @@ up with a way of making that work nicely.
 \author{
 Rich FitzJohn
 }
-

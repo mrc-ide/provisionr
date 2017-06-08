@@ -44,6 +44,7 @@ package_sources <- function(cran = NULL, repos = NULL,
   R6_package_sources$new(cran, repos, github, local, expire, local_drat, data)
 }
 
+##' @importFrom R6 R6Class
 R6_package_sources <- R6::R6Class(
   "package_sources",
   public = list(
