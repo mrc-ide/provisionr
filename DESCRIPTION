@@ -8,10 +8,12 @@ Description: Provision a set of packages into a new library, possibly for
 License: MIT + file LICENSE
 Imports:
     R6,
+    curl,
     drat,
     prettyunits,
     remotes,
     rversions,
+    progress,
     storr (>= 1.1.0),
     withr
 Suggests:
