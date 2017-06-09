@@ -137,7 +137,7 @@ download_rtools <- function(path, r_version = NULL) {
   CRAN <- "https://cloud.r-project.org"
   path <- sprintf("bin/windows/Rtools/Rtools%s.exe", names(i)[[1L]])
   url <- file.path(CRAN, path)
-  download_files(url, dest, count = FALSE)
+  download_files(url, path, count = FALSE)
 }
 
 package_url <- function(pkgs, available, type) {

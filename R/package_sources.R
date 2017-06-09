@@ -36,6 +36,8 @@
 ##'   \code{package_sources} object.  This is useful for serialisation
 ##'   without saving references to \code{provisionr}.
 ##'
+##' @param spec Raw entries of the form \code{<type>::<user>/<repo>...}
+##'
 ##' @export
 package_sources <- function(cran = NULL, repos = NULL,
                             github = NULL, local = NULL,

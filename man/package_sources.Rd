@@ -42,6 +42,8 @@ session-specific temporary directory will be used.}
 created by running the \code{as_list()} method of a
 \code{package_sources} object.  This is useful for serialisation
 without saving references to \code{provisionr}.}
+
+\item{spec}{Raw entries of the form \code{<type>::<user>/<repo>...}}
 }
 \description{
 Collect information on package sources
