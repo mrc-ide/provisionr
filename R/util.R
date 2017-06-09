@@ -6,25 +6,6 @@ is_mac <- function() {
   Sys.info()[["sysname"]] == "Darwin"
 }
 
-## TODO: All the usual crap of making this robust enough to rely on.
-download_file <- function(url, ..., progress = NULL, destfile = NULL,
-                          keep_ext = FALSE, suppress_warnings = FALSE) {
-  progress <- progress %||% getOption("provisionr.download.progress", FALSE)
-  if (is.null(destfile)) {
-    ext <- if (grepl("\\.tar\\.gz$", url)) "tar.gz" else tools::file_ext(url)
-    destfile <- tempfile(fileext = paste0(".", ext))
-  }
-  if (suppress_warnings) {
-    oo <- options(warn = -1)
-    on.exit(options(oo))
-  }
-  code <- download.file(url, destfile, mode = "wb", quiet = !progress, ...)
-  if (code != 0L) {
-    stop("error downloading file")
-  }
-  destfile
-}
-
 `%||%` <- function(a, b) {
   if (is.null(a)) b else a
 }

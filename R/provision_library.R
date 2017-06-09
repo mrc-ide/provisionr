@@ -70,7 +70,7 @@
 ##' @importFrom stats na.omit setNames
 ##'
 ##' @importFrom utils available.packages capture.output contrib.url
-##'   download.file installed.packages untar unzip
+##'   installed.packages untar unzip
 ##'
 ##' @author Rich FitzJohn
 provision_library <- function(packages, lib,
