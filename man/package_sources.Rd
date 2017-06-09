@@ -5,7 +5,7 @@
 \title{Collect information on package sources}
 \usage{
 package_sources(cran = NULL, repos = NULL, github = NULL, local = NULL,
-  expire = NULL, local_drat = NULL, data = NULL)
+  expire = NULL, local_drat = NULL, data = NULL, spec = NULL)
 }
 \arguments{
 \item{cran}{A single URL for the CRAN repo to use.  If

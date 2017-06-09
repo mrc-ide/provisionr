@@ -1,16 +1,29 @@
-## TODO: decide what a vectorised interface to version and type looks
-## like here, especially with the macosx shit show.  I think that
-## "target" is the right call.
+##' Download a fraction of CRAN to serve locally.
+##'
+##' @title Download some of CRAN
+##' @param packages Character vector of packages to download
+##' @param path Destination
+##' @param r_version Target R version
+##' @param target Target platform (use "ALL" for all platforms)
+##' @param suggests Include suggested packages too?
+##' @param package_sources A \code{provisionr::package_sources} object
+##' @param progress Control progress bar printing
+##' @export
 download_cran <- function(packages, path, r_version = NULL,
                           target = "windows",
                           suggests = FALSE,
-                          package_sources = NULL) {
+                          package_sources = NULL,
+                          progress = NULL) {
+  ## TODO: something to organise pruning....
+  ## TODO: handle vectorised target and r_version
+  ## TODO: sentinal value for all mac (perhaps macosx)
+  ## TODO: ensure that "source" is a valid target
   version <- check_r_version(r_version)
   version_str <- r_version_str(version)
 
   dir.create(path, FALSE, TRUE)
 
-  src <- prepare_package_sources(package_sources, FALSE)
+  src <- prepare_package_sources(package_sources, FALSE, progress)
   repos <- prepare_repos(src)
 
   if (length(target) > 0L) {
@@ -18,6 +31,10 @@ download_cran <- function(packages, path, r_version = NULL,
     if (identical(unname(target), "ALL")) {
       target <- valid
     } else {
+      if ("macosx" %in% target) {
+        target <- union(setdiff("macosx", target),
+                        grep("^macosx", valid, value = TRUE))
+      }
       err <- setdiff(target, valid)
       if (length(err)) {
         stop("Invalid target %s for R version %s",
@@ -29,7 +46,7 @@ download_cran <- function(packages, path, r_version = NULL,
 
   ## TODO: change this to suck less.
   url_src <- contrib_url(repos, "src", NULL)
-  db_src <- available_packages(url_src)
+  db_src <- available_packages(url_src, progress = progress)
 
   ## TODO: this will fail in the (very) unlikely situation where there
   ## are binary only packages to deal with.
@@ -39,7 +56,8 @@ download_cran <- function(packages, path, r_version = NULL,
   ## source packages:
   dest_src <- contrib_url(path, "src", version_str)
   dir.create(dest_src, FALSE, TRUE)
-  res <- download_packages(pkgs, dest_src, db_src, "source")
+  provisionr_log("download", "source")
+  res <- download_packages(pkgs, dest_src, db_src, "source", progress)
   if (res) {
     tools::write_PACKAGES(dest_src, type = "source")
   }
@@ -47,10 +65,11 @@ download_cran <- function(packages, path, r_version = NULL,
   ## Then binary:
   for (i in seq_along(target)) {
     url_bin <- contrib_url(repos, target[[i]], version_str)
-    db_bin <- available_packages(url_bin)
+    db_bin <- available_packages(url_bin, progress = progress)
     dest_bin <- contrib_url(path, target[[i]], version_str)
     dir.create(dest_bin, FALSE, TRUE)
-    res <- download_packages(pkgs, dest_bin, db_bin, binary_type[[i]])
+    provisionr_log("download", sprintf("binary: %s", target[[i]]))
+    res <- download_packages(pkgs, dest_bin, db_bin, binary_type[[i]], progress)
     if (res) {
       ## This is insane:
       type_write <- sub("^mac.binary.*", "mac.binary", binary_type[[i]])
@@ -61,27 +80,46 @@ download_cran <- function(packages, path, r_version = NULL,
   path
 }
 
-download_r <- function(path, type = "windows", r_version = NULL) {
-  if (type != "windows") {
-    stop("Not yet implemented")
-  }
+download_r <- function(path, target = "windows", r_version = NULL) {
   dir.create(path, FALSE, TRUE)
   r_version <- check_r_version(r_version)
   version_str <- as.character(r_version)
 
   if (r_version == r_release()) {
-    url <- sprintf("https://cran.r-project.org/bin/windows/base/R-%s-win.exe",
-                   version_str)
+    loc <- c(windows = sprintf("bin/windows/base/R-%s-win.exe", version_str),
+             macosx = sprintf("bin/macosx/R-%s.pkg", version_str))
   } else {
-    url <- sprintf(
-      "https://cran.r-project.org/bin/windows/base/old/%s/R-%s-win.exe",
-      version_str, version_str)
+    loc <- c(windows = sprintf("bin/windows/base/old/%s/R-%s-win.exe",
+                               version_str, version_str),
+             macosx = sprintf("bin/macosx/old/R-%s.pkg", version_str))
   }
-  dest <- file.path(path, basename(url))
-  if (!file.exists(dest)) {
-    download_file2(url, dest, progress = TRUE)
+  loc[["source"]] <- sprintf("src/base/R-%d/R-%s.tar.gz",
+                             as.integer(r_version[1,1]), version_str)
+
+  valid <- names(loc)
+  if (target == "ALL") {
+    target <- valid
+  } else {
+    is_mac <- grepl("^macosx", target)
+    if (any(is_mac)) {
+      target <- c(target[!is_mac], "macosx")
+    }
+    is_linux <- target == "linux"
+    if (any(is_linux)) {
+      target[!is_linux] <- "source"
+    }
+    err <- setdiff(target, valid)
+    if (length(err)) {
+      stop("Invalid target ", paste(err, collapse = ", "))
+    }
   }
-  dest
+
+  CRAN <- "https://cloud.r-project.org"
+  url <- file.path(CRAN, sprintf(loc[target], version_str))
+
+  download_files(url, path, labels = target)
+
+  file.path(path, basename(url))
 }
 
 download_rtools <- function(path, r_version = NULL) {
@@ -96,13 +134,10 @@ download_rtools <- function(path, r_version = NULL) {
   if (length(i) == 0) {
     stop("R version is too old")
   }
-  url <- sprintf("https://cran.r-project.org/bin/windows/Rtools/Rtools%s.exe",
-                 names(i)[[1L]])
-  dest <- file.path(path, basename(url))
-  if (!file.exists(dest)) {
-    download_file2(url, dest, progress = TRUE)
-  }
-  dest
+  CRAN <- "https://cloud.r-project.org"
+  path <- sprintf("bin/windows/Rtools/Rtools%s.exe", names(i)[[1L]])
+  url <- file.path(CRAN, path)
+  download_files(url, dest, count = FALSE)
 }
 
 package_url <- function(pkgs, available, type) {
@@ -127,29 +162,16 @@ package_url <- function(pkgs, available, type) {
   ret
 }
 
-download_packages <- function(pkgs, destdir, available, type) {
+download_packages <- function(pkgs, destdir, available, type, progress = NULL) {
   url <- package_url(pkgs, available, type)
-
   dest_file <- file.path(destdir, basename(url))
   if (any(is.na(url))) {
     message(sprintf("Skipping packages (type: %s) for packages: %s",
                     type, paste(pkgs[is.na(url)], collapse = ", ")))
   }
-  fetch <- url[!file.exists(dest_file) & !is.na(url)]
-
-  is_local <- grepl("file://", fetch)
-  if (any(is_local)) {
-    file.copy(file_unurl(fetch[is_local]), destdir)
-  }
-
-  is_remote <- !is_local
-  if (any(is_remote)) {
-    for (u in fetch[is_remote]) {
-      download_file2(u, file.path(destdir, basename(u)), progress = TRUE)
-    }
-  }
-
-  length(fetch) > 0L
+  i <- !file.exists(dest_file) & !is.na(url)
+  download_files(url[i], destdir, labels = pkgs[i], progress = progress)
+  any(i)
 }
 
 package_ext <- function(type) {

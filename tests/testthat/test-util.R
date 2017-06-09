@@ -33,17 +33,6 @@ test_that("file_unurl", {
     expect_equal(file_unurl("file:///c:/foo"), "c:/foo"))
 })
 
-test_that("download file error", {
-  expect_error(download_file("xxx://asdfa"))
-  expect_error(suppressWarnings(download_file("http://asdfa")))
-})
-
-test_that("download file error (code)", {
-  with_mock(`utils::download.file` = function(...) 1,
-            expect_error(download_file("https://google.com"),
-                         "error downloading file"))
-})
-
 test_that("assertions", {
   expect_error(assert_scalar(NULL), "must be a scalar")
   expect_error(assert_scalar(1:2), "must be a scalar")

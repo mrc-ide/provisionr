@@ -30,7 +30,7 @@ test_that("build (local)", {
   expect_null(src$local_drat)
 
   expect_true(src$needs_build())
-  src$build()
+  src$build(progress = FALSE)
   expect_is(src$local_drat, "character")
   expect_true(file.exists(src$local_drat))
 
@@ -50,7 +50,7 @@ test_that("build (github)", {
   expect_null(src$local_drat)
 
   src$local_drat <- tempfile()
-  ret <- src$build()
+  ret <- src$build(progress = FALSE)
   expect_true(file.exists(src$local_drat))
 
   path <- file.path(src$local_drat, "src", "contrib")
@@ -69,7 +69,7 @@ test_that("build (github subdir)", {
   expect_null(src$local_drat)
 
   src$local_drat <- tempfile()
-  ret <- src$build()
+  ret <- src$build(progress = FALSE)
   expect_true(file.exists(src$local_drat))
 
   dat <- drat_storr(src$local_drat)$get(src$spec)
@@ -125,7 +125,7 @@ test_that("print", {
   expect_match(as.character(x), "<package_sources>", fixed = TRUE, all = FALSE)
   expect_output(print(x), "<package_sources>", fixed = TRUE)
   expect_output(print(x), "drat: <pending build>")
-  y <- x$build()
+  y <- x$build(progress = FALSE)
   expect_match(as.character(y), "<package_sources>", fixed = TRUE, all = FALSE)
   expect_output(print(x), paste("path:", tempdir()), fixed = TRUE)
 })
@@ -139,7 +139,7 @@ test_that("prepare_repos", {
   expect_equal(prepare_repos(src), c(src$repos, src$cran))
 
   src <- package_sources(repos = "https://foo.com", local = "hello")
-  dat <- src$build()
+  dat <- src$build(progress = FALSE)
   expect_equal(unname(prepare_repos(dat)),
                unname(c(file_url(dat$local_drat), dat$repos,
                         sanitise_options_cran())))
@@ -148,7 +148,7 @@ test_that("prepare_repos", {
 test_that("expire", {
   dt <- 1.0
   src <- package_sources(local = "hello", expire = dt / (24 * 60 * 60))
-  src$build()
+  src$build(progress = FALSE)
   expect_false(src$needs_build())
   expect_match(as.character(src), "expires:", fixed = TRUE, all = FALSE)
   Sys.sleep(dt)

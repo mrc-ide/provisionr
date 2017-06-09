@@ -1,7 +1,8 @@
 ## This somewhat sanitises available.packages.  The idea is to behave
 ## like available.packages but to allow filtering against
 available_packages <- function(urls, r_version = NULL, os_type = NULL,
-                               subarch = NULL, drop_duplicates = TRUE) {
+                               subarch = NULL, drop_duplicates = TRUE,
+                               progress = NULL) {
   if (is.null(r_version)) {
     use_rds <- getRversion() >= numeric_version("3.4.0")
   } else {
@@ -9,7 +10,7 @@ available_packages <- function(urls, r_version = NULL, os_type = NULL,
     use_rds <- r_version >= numeric_version("3.4.0")
   }
   fields <- colnames(utils::available.packages(NULL))
-  dat <- lapply(urls, read_available_packages, use_rds)
+  dat <- lapply(urls, read_available_packages, use_rds, progress)
   ret <- do.call("rbind", lapply(dat, clean_matrix, fields))
   rownames(ret) <- unname(ret[, "Package"])
   filter_available_packages(ret, r_version, os_type, subarch, drop_duplicates)
@@ -87,7 +88,7 @@ filter_available_packages_drop_duplicates <- function(db, drop_duplicates) {
 }
 
 cache <- new.env(parent = emptyenv())
-read_available_packages <- function(url, use_rds) {
+read_available_packages <- function(url, use_rds, progress) {
   if (is_file_url(url)) {
     d <- read.dcf(file.path(file_unurl(url), "PACKAGES"))
   } else if (exists(url, cache)) {
@@ -95,10 +96,10 @@ read_available_packages <- function(url, use_rds) {
   } else {
     nm <- paste0("PACKAGES", c(if (use_rds) ".rds", ".gz", ""))
     for (x in nm) {
-      path <- tryCatch(
-        download_file(file.path(url, x), destfile = tempfile(),
-                      suppress_warnings = TRUE),
-        error = identity)
+      path <- tryCatch(download_file1(file.path(url, x), tempdir(),
+                                      dest_file = basename(tempfile()),
+                                      progress = progress, report = FALSE),
+                       error = identity)
       if (!inherits(path, "error")) {
         if (x == "PACKAGES.rds") {
           d <- readRDS(path)

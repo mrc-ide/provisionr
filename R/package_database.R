@@ -1,6 +1,6 @@
 ## The term "target" here is our installation target type; it's going to be:
 ##   src, windows, macos(|/mavericks|/el-capitan)
-package_database <- function(repos, target, version) {
+package_database <- function(repos, target, version, progress = NULL) {
   provisionr_log("download", "package database")
 
   is_local <- grepl("^(/|[A-Za-z]:|file://)", repos)
@@ -39,7 +39,8 @@ package_database <- function(repos, target, version) {
   }
 
   url_src <- contrib_url(repos, "src", NULL)
-  pkgs_src <- available_packages(url_src, version, os_type, subarch)
+  pkgs_src <- available_packages(url_src, version, os_type, subarch,
+                                 progress = progress)
 
   x <- pkgs_src[, "Depends"]
   f <- function(x) {
@@ -57,7 +58,8 @@ package_database <- function(repos, target, version) {
     if (any(is_local)) {
       lapply(file_unurl(url_bin[is_local]), drat_ensure_PACKAGES)
     }
-    pkgs_bin <- available_packages(url_bin, version, os_type, subarch)
+    pkgs_bin <- available_packages(url_bin, version, os_type, subarch,
+                                   progress = progress)
 
     if (check_r_version(version)[1, 1:2] < r_oldrel()[1, 1:2]) {
       ## Here are might have trouble with windows binaries so I am

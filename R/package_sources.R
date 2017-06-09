@@ -40,8 +40,9 @@
 package_sources <- function(cran = NULL, repos = NULL,
                             github = NULL, local = NULL,
                             expire = NULL, local_drat = NULL,
-                            data = NULL) {
-  R6_package_sources$new(cran, repos, github, local, expire, local_drat, data)
+                            data = NULL, spec = NULL) {
+  R6_package_sources$new(cran, repos, github, local, expire, local_drat,
+                         data, spec)
 }
 
 ##' @importFrom R6 R6Class
@@ -55,7 +56,7 @@ R6_package_sources <- R6::R6Class(
     expire = NULL,
 
     initialize = function(cran, repos, github, local, expire, local_drat,
-                          data = NULL) {
+                          data = NULL, spec = NULL) {
       if (!is.null(data)) {
         assert_is(data, "package_sources_list")
         ## Could require that none of these other arguments are non-NULL
@@ -91,9 +92,12 @@ R6_package_sources <- R6::R6Class(
         self$repos <- repos
       }
 
+
       ## Collect all the spec information here into a single vector, I
       ## think; that'll be easier to modify.
-      spec <- NULL
+      if (!is.null(spec)) {
+        spec <- lapply(spec, parse_remote)
+      }
 
       if (!is.null(github)) {
         tmp <- lapply(github, parse_remote)
@@ -151,7 +155,7 @@ R6_package_sources <- R6::R6Class(
       rebuild
     },
 
-    build = function(refresh = FALSE, force = FALSE) {
+    build = function(refresh = FALSE, force = FALSE, progress = NULL) {
       if (length(self$spec) > 0L) {
         if (is.null(self$local_drat)) {
           ## TODO: this may not always be desirable, because if this
@@ -162,16 +166,16 @@ R6_package_sources <- R6::R6Class(
         }
         path <- self$local_drat
         if (refresh || self$needs_build()) {
-          drat_build(self$spec, path, force)
+          drat_build(self$spec, path, force, progress)
         }
       }
       invisible(self)
     }
   ))
 
-prepare_package_sources <- function(src, refresh = FALSE) {
+prepare_package_sources <- function(src, refresh = FALSE, progress = NULL) {
   if (inherits(src, "package_sources")) {
-    src$build(refresh)
+    src$build(refresh, progress = progress)
   } else if (!is.null(src)) {
     stop("Invalid input for src")
   }

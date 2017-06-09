@@ -79,7 +79,7 @@ drat_storr <- function(path) {
 ## refreshing the store here; we could do that if we have a fast way
 ## of ripping through the directories and determine if any file has
 ## changed.
-drat_build <- function(specs, path, force) {
+drat_build <- function(specs, path, force, progress) {
   drat_repo_init(path)
   desc <- list()
 
@@ -87,7 +87,7 @@ drat_build <- function(specs, path, force) {
 
   while (length(specs) > 0L) {
     for (s in specs) {
-      desc[[s]] <- drat_build_package(s, path, db, force)
+      desc[[s]] <- drat_build_package(s, path, db, force, progress)
     }
 
     ## Then comes a fairly ugly bit of collecting up all the extra bits:
@@ -100,7 +100,7 @@ drat_build <- function(specs, path, force) {
   desc
 }
 
-drat_build_package <- function(spec, path, db, force = FALSE) {
+drat_build_package <- function(spec, path, db, force = FALSE, progress = NULL) {
   x <- parse_remote(spec)
 
   provisionr_log("drat", x$spec)
@@ -109,7 +109,7 @@ drat_build_package <- function(spec, path, db, force = FALSE) {
   ## current version.  I don't depend on the necessary packages to do
   ## this though; we'll need to depend on jsonlite and possibly on
   ## curl
-  pkg <- download_package(x)
+  pkg <- download_package(x, progress)
   d <- as.list(extract_DESCRIPTION(pkg)[1L, ])
 
   ## The rule here needs to be that we update things if either:
@@ -139,10 +139,12 @@ drat_build_package <- function(spec, path, db, force = FALSE) {
   d
 }
 
-github_build_package <- function(x) {
+github_build_package <- function(x, progress = NULL) {
   tmp <- tempfile()
   dir.create(tmp)
-  pkg <- download_file(x$url_package, keep_ext = TRUE)
+  pkg <- download_file1(x$url_package, tmp, label = x$spec,
+                        dest_file = paste0(x$repo, ".zip"),
+                        progress = progress)
   unzip(pkg, exdir = tmp)
   file.remove(pkg)
   unpacked <- target <- dir(tmp, full.names = TRUE)
@@ -172,13 +174,15 @@ github_url_description <- function(x) {
   file.path(ret, "DESCRIPTION")
 }
 
-download_package <- function(x) {
+download_package <- function(x, progress = NULL) {
   ## When downloading files, keep the same extension, or we'll confuse
   ## things later.
   if (x$type == "github") {
-    pkg <- github_build_package(x)
+    pkg <- github_build_package(x, progress)
   } else if (x$type == "url") {
-    pkg <- download_file(x$url_package, keep_ext = TRUE)
+    tmp <- tempfile()
+    dir.create(tmp, FALSE, TRUE)
+    pkg <- download_file1(x$url_package, tmp, progress = progress)
   } else if (x$type == "local") {
     if (x$is_directory) {
       ## NOTE: A disadvantage of doing this is that it will rebuild

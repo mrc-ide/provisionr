@@ -2,10 +2,11 @@ context("cross_install")
 
 test_that("binary cross install", {
   lib <- tempfile()
-  db <- package_database(c(CRAN = "https://cran.rstudio.com"), "windows", NULL)
+  db <- package_database(c(CRAN = "https://cran.rstudio.com"), "windows", NULL,
+                         progress = FALSE)
   packages <- "ape"
   plan <- plan_installation(packages, db, lib, "upgrade")
-  res <- cross_install_packages("ape", lib, db, plan)
+  res <- cross_install_packages("ape", lib, db, plan, progress = FALSE)
   expect_equal(dir(lib), "ape")
   expect_true(file.exists(file.path(lib, "ape", "libs", "x64", "ape.dll")))
 })
@@ -13,10 +14,10 @@ test_that("binary cross install", {
 test_that("binary cross install with deps", {
   lib <- tempfile()
   db <- package_database(c(CRAN = "https://cran.rstudio.com"),
-                         "windows", NULL)
+                         "windows", NULL, progress = FALSE)
   packages <- "devtools"
   plan <- plan_installation(packages, db, lib, "upgrade")
-  res <- cross_install_packages(packages, lib, db, plan)
+  res <- cross_install_packages(packages, lib, db, plan, progress = FALSE)
   expect_true("devtools" %in% dir(lib))
   expect_true("httr" %in% dir(lib))
   expect_true(file.exists(
@@ -72,8 +73,9 @@ test_that("cross install source package", {
   ## This is never going on CRAN and has no nasty dependencies:
   src <- package_sources(github = "richfitz/kitten")
   src$local_drat <- tempfile()
-  src$build()
-  provision_library("kitten", lib, platform = "windows", src = src)
+  src$build(progress = FALSE)
+  provision_library("kitten", lib, platform = "windows", src = src,
+                    progress = FALSE)
   expect_equal(dir(lib), "kitten")
 })
 
@@ -83,7 +85,7 @@ test_that("cross install source package", {
 test_that("cross install package that triggers load", {
   skip_on_travis()
   src <- package_sources(local = "lazyproblem")
-  drat <- src$build()
+  drat <- src$build(progress = FALSE)
 
   lib_us <- tempfile()
   lib_other <- tempfile()
@@ -91,7 +93,7 @@ test_that("cross install package that triggers load", {
 
   ## Need to get a copy of a binary package that will conflict loaded
   ## for lazyloading to fail.
-  provision_library("ape", lib_us, quiet = TRUE)
+  provision_library("ape", lib_us, quiet = TRUE, progress = FALSE)
   expect_true("ape" %in% dir(lib_us))
 
   ## TODO: consider doing the target platform differently here; go with
@@ -104,7 +106,7 @@ test_that("cross install package that triggers load", {
   withr::with_libpaths(
     lib_us,
     provision_library("lazyproblem", lib_other, platform = platform_other,
-                      src = drat))
+                      src = drat, progress = FALSE))
 
   pkgs <- .packages(TRUE, lib_other)
   expect_equal(sort(pkgs), sort(c("ape", "lazyproblem")))
@@ -114,33 +116,33 @@ test_that("installed_action", {
   lib <- tempfile()
 
   msgs <- capture_messages(
-    provision_library("ape", lib, platform = "windows"))
+    provision_library("ape", lib, platform = "windows", progress = FALSE))
   expect_true(any(grepl("cross", msgs)))
   expect_equal(dir(lib), "ape")
 
   ## Skip reinstallation:
   msgs <- capture_messages(
     provision_library("ape", lib, platform = "windows",
-                      installed_action = "skip"))
+                      installed_action = "skip", progress = FALSE))
   expect_false(any(grepl("cross", msgs)))
 
   ## Upgrade (but don't)
   msgs <- capture_messages(
     provision_library("ape", lib, platform = "windows",
-                      installed_action = "upgrade"))
+                      installed_action = "upgrade", progress = FALSE))
   expect_false(any(grepl("cross", msgs)))
 
   ## Upgrade (but do) -- this does not work!
   alter_package_version(file.path(lib, "ape"), FALSE)
   msgs <- capture_messages(
     provision_library("ape", lib, platform = "windows",
-                      installed_action = "upgrade"))
+                      installed_action = "upgrade", progress = FALSE))
   expect_true(any(grepl("cross", msgs)))
 
   ## Replace:
   msgs <- capture_messages(
     provision_library("ape", lib, platform = "windows",
-                      installed_action = "replace"))
+                      installed_action = "replace", progress = FALSE))
   expect_true(any(grepl("cross", msgs)))
 })
 
@@ -152,16 +154,17 @@ test_that("missing compiled packages", {
   ##
   ## TODO: cache the calls here, possibly across sessions?
   src <- package_sources(github = "richfitz/dde")
-  drat <- src$build()
+  drat <- src$build(progress = FALSE)
 
   ## NOTE: This triggers the lazy loading issue that I had in context
   ## (and had solved there at some point) where lazy loading of one
   ## package triggers a failure in the package installation.
   path <- tempfile()
-  expect_error(provision_library("dde", path, platform = "windows", src = drat),
+  expect_error(provision_library("dde", path, platform = "windows", src = drat,
+                                 progress = FALSE),
                "Packages need compilation")
   ans <- provision_library("dde", path, platform = "windows", src = drat,
-                           allow_missing = TRUE)
+                           allow_missing = TRUE, progress = FALSE)
   expect_equal(sort(rownames(ans$missing)),
                sort(c("dde", "ring")))
 })
@@ -170,10 +173,10 @@ test_that("prefer drat files", {
   ## TODO: this can actually point at the source file already in the
   ## same repo.
   src <- package_sources(github = "cran/ape")
-  drat <- src$build()
+  drat <- src$build(progress = FALSE)
   path <- tempfile()
   ans <- provision_library("ape", path, platform = "windows", src = drat,
-                           allow_missing = TRUE)
+                           allow_missing = TRUE, progress = FALSE)
   expect_equal(rownames(ans$missing), "ape")
   expect_equal(dir(path), character(0))
 })
@@ -185,7 +188,8 @@ test_that("don't cross install locally", {
 
 test_that("missing packages", {
   lib <- tempfile()
-  db <- package_database(c(CRAN = "https://cran.rstudio.com"), "windows", NULL)
+  db <- package_database(c(CRAN = "https://cran.rstudio.com"), "windows", NULL,
+                         progress = FALSE)
 
   expect_error(plan_installation("foobar", db, lib, "skip"),
                "Can't find installation candidate for: foobar")
@@ -203,14 +207,15 @@ test_that("missing packages", {
 test_that("remove existing packages on upgrade", {
   packages <- "ape"
   lib <- tempfile()
-  db <- package_database(getOption("repos")[[1L]], "windows", NULL)
+  db <- package_database(getOption("repos")[[1L]], "windows", NULL,
+                         progress = FALSE)
   plan <- plan_installation(packages, db, lib, "replace")
-  cross_install_packages(packages, lib, db, plan)
+  cross_install_packages(packages, lib, db, plan, progress = FALSE)
 
   f <- file.path(lib, "ape", "provisionr")
   writeLines("provisionr", f)
   expect_true(file.exists(f))
 
-  cross_install_packages(packages, lib, db, plan)
+  cross_install_packages(packages, lib, db, plan, progress = FALSE)
   expect_false(file.exists(f))
 })

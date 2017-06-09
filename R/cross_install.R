@@ -2,7 +2,8 @@
 ## return information on what could not be installed due to having no
 ## installation candidates.
 cross_install_packages <- function(packages, lib, db, plan, ...,
-                                   allow_missing = FALSE) {
+                                   workdir = NULL,
+                                   allow_missing = FALSE, progress = NULL) {
   if (lib %in% .libPaths()) {
     stop("Do not use cross_install_packages to install into current library")
   }
@@ -20,36 +21,35 @@ cross_install_packages <- function(packages, lib, db, plan, ...,
     }
   }
 
-  for (i in seq_along(plan$packages)) {
-    if (!plan$compile[i]) {
-      cross_install_package(plan$packages[[i]], lib, plan$binary[[i]], db)
+  ## TODO: download the packages here instead, then cross install
+  if (is.null(workdir)) {
+    workdir <- tempfile()
+    on.exit(unlink(workdir, recursive = TRUE))
+  }
+  dir.create(workdir, FALSE, TRUE)
+
+  install <- plan$packages
+  urls <- files <- character(length(install))
+  urls[plan$binary] <- package_url(install[plan$binary],
+                                   db$bin, binary_type(db$target))
+  urls[!plan$binary] <- package_url(install[!plan$binary],
+                                    db$src, "source")
+  i <- !plan$compile
+  if (any(i)) {
+    files[i] <- download_files(urls[i], workdir, labels = install[i],
+                               progress = progress)
+    for (j in which(i)) {
+      cross_install_package(install[[j]], files[[j]], lib, plan$binary[[j]])
     }
   }
 
   plan
 }
 
-cross_install_package <- function(package, lib, binary, db) {
+cross_install_package <- function(package, path, lib, binary) {
   provisionr_log("cross", package)
-  tmp <- tempfile()
-  dir.create(tmp)
-  on.exit(unlink(tmp, recursive = TRUE), add = TRUE)
 
-  target <- db$target
-  db_use <- db[[if (binary) "bin" else "src"]]
-  x <- as.list(db_use[match(package, db_use[, "Package"]), ])
-
-  ext <- if (!binary) "tar.gz" else if (target == "windows") "zip" else "tgz"
-  url <- sprintf("%s/%s_%s.%s", x$Repository, x$Package, x$Version, ext)
-
-  if (grepl("file://", url)) {
-    path <- file_unurl(url)
-  } else {
-    path <- file.path(tmp, basename(url))
-    download_file(url, destfile = path)
-  }
-
-  dest <- file.path(lib, x$Package)
+  dest <- file.path(lib, package)
   if (file.exists(dest)) {
     unlink(dest, recursive = TRUE)
   }
@@ -76,7 +76,7 @@ cross_install_package <- function(package, lib, binary, db) {
               paste0("--library=", shQuote(normalizePath(lib_tmp, "/"))),
               shQuote(normalizePath(path)))
     call_r(args, env = env)
-    file.rename(file.path(lib_tmp, x$Package), dest)
+    file.rename(file.path(lib_tmp, package), dest)
   }
 
   invisible(TRUE)

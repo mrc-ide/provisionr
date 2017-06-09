@@ -6,7 +6,8 @@
 \usage{
 provision_library(packages, lib, platform = NULL, version = NULL,
   src = NULL, check_dependencies = TRUE, installed_action = "upgrade",
-  allow_missing = FALSE, refresh_drat = FALSE, quiet = FALSE)
+  allow_missing = FALSE, refresh_drat = FALSE, quiet = FALSE,
+  progress = NULL)
 }
 \arguments{
 \item{packages}{A character vector of packages to include}
@@ -65,6 +66,9 @@ forcing this would be to pass \code{expire = 0} through to the
 indicating if package installation should be done quietly.  With
 this as \code{FALSE} (the default) rather a lot of output can be
 generated.}
+
+\item{progress}{Passed through to the package downloading to
+control printing of the progress bar.}
 }
 \description{
 Create or update a library of packages.

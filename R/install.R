@@ -4,7 +4,8 @@ install_packages <- function(packages, lib, repos, ...,
                              installed_action = "skip",
                              check_dependencies = FALSE,
                              error = TRUE,
-                             quiet = FALSE) {
+                             quiet = FALSE,
+                             progress = NULL) {
   ## TODO: At the moment, this is going to ignore the installed_action
   ## bit and we'll pick that up by refactoring the plan bits from
   ## cross_install.  This will have the (big) advantage of memoising
@@ -25,7 +26,7 @@ install_packages <- function(packages, lib, repos, ...,
     ## strictly, we should pass in check_dependencies here I think.
     packages <- check_installed_packages(packages, lib)
   } else {
-    db <- package_database(repos, NULL, NULL)
+    db <- package_database(repos, NULL, NULL, progress = progress)
     ## TODO: a different plan will be needed here when not creating a
     ## standalong repo; probably the biggest difference will be that
     ## 'lib' should be a vector of libraries to look in.

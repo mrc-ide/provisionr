@@ -4,7 +4,7 @@ test_that("build drat", {
   path <- tempfile()
   dir.create(path)
   specs <- "github::richfitz/odin"
-  ans <- drat_build(specs, path, FALSE)
+  ans <- drat_build(specs, path, FALSE, FALSE)
 
   expect_is(ans, "list")
   expect_true(specs %in% names(ans))
@@ -22,7 +22,7 @@ test_that("directory", {
 
   src <- package_sources(local = hello)
   expect_null(src$local_drat)
-  ans <- src$build()
+  ans <- src$build(progress = FALSE)
   expect_is(src$local_drat, "character")
   expect_true(file.exists(src$local_drat))
 
@@ -42,7 +42,7 @@ test_that("tarball", {
   pkg <- build_package(hello)
 
   src <- package_sources(local = pkg)
-  ans <- src$build()
+  ans <- src$build(progress = FALSE)
 
   db <- drat_storr(ans$local_drat)
   k <- db$list()
@@ -59,15 +59,15 @@ test_that("update", {
   src <- package_sources(local = hello)
   expect_true(src$needs_build())
 
-  expect_message(src$build(), "drat")
+  expect_message(src$build(progress = FALSE), "drat")
   expect_false(src$needs_build())
 
-  expect_silent(src$build())
+  expect_silent(src$build(progress = FALSE))
 
   ## Now, we update the package:
   v <- alter_package_version(hello, increase = TRUE)
-  expect_silent(src$build())
-  expect_message(dat <- src$build(TRUE), "drat")
+  expect_silent(src$build(progress = FALSE))
+  expect_message(dat <- src$build(TRUE, progress = FALSE), "drat")
   db <- drat_storr(dat$local_drat)
   expect_equal(db$get(db$list())$Version, as.character(v))
 })
@@ -81,8 +81,8 @@ test_that("binary package", {
   pkg <- res[[2]]
 
   src <- package_sources(local = pkg)
-  expect_message(src$build(), "drat")
-  expect_silent(src$build())
+  expect_message(src$build(progress = FALSE), "drat")
+  expect_silent(src$build(progress = FALSE))
 
   db <- package_database(src$local_drat, "windows", NULL)
   expect_equal(nrow(db$src), 0)
@@ -103,7 +103,7 @@ test_that("local_drat in constructor", {
   expect_true(src$needs_build())
   expect_false(file.exists(tmp))
 
-  src$build()
+  src$build(progress = FALSE)
   expect_equal(src$local_drat, tmp)
   expect_false(src$needs_build())
   expect_true(file.exists(tmp))
@@ -122,18 +122,18 @@ test_that("update", {
   expect_true(src$needs_build())
   expect_false(file.exists(tmp))
 
-  src$build()
+  src$build(progress = FALSE)
   db <- drat_storr(tmp)
   d1 <- db$get(src$spec)
   md5 <- d1$md5
   tools::md5sum(file.path(contrib.url(tmp, "source"), d1$tgz))
 
-  src$build(TRUE)
+  src$build(TRUE, progress = FALSE)
   expect_equal(db$get(src$spec), d1)
 
   Sys.sleep(1) # moves the timestamp along
 
-  src$build(TRUE, TRUE)
+  src$build(TRUE, TRUE, progress = FALSE)
   d2 <- db$get(src$spec)
   expect_false(identical(d1, d2))
   expect_false(identical(d1$md5, d2$md5))

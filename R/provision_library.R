@@ -62,6 +62,9 @@
 ##'   this as \code{FALSE} (the default) rather a lot of output can be
 ##'   generated.
 ##'
+##' @param progress Passed through to the package downloading to
+##'   control printing of the progress bar.
+##'
 ##' @export
 ##'
 ##' @importFrom stats na.omit setNames
@@ -77,7 +80,8 @@ provision_library <- function(packages, lib,
                               installed_action = "upgrade",
                               allow_missing = FALSE,
                               refresh_drat = FALSE,
-                              quiet = FALSE) {
+                              quiet = FALSE,
+                              progress = NULL) {
   if (length(packages) == 0L) {
     return(NULL)
   }
@@ -106,10 +110,10 @@ provision_library <- function(packages, lib,
   ## Then we prepare the 'package_sources' object; this will pull all
   ## required packages into the drat repository (but not build binary
   ## packages)
-  src <- prepare_package_sources(src, refresh_drat)
+  src <- prepare_package_sources(src, refresh_drat, progress)
   repos <- prepare_repos(src)
 
-  db <- package_database(repos, platform, version)
+  db <- package_database(repos, platform, version, progress = progress)
   plan <- plan_installation(packages, db, lib_check, installed_action,
                             src$local_drat)
   extra <- setdiff(plan$packages, packages)
@@ -146,7 +150,8 @@ provision_library <- function(packages, lib,
     }
 
     plan <- cross_install_packages(packages, lib, db, plan,
-                                   allow_missing = allow_missing)
+                                   allow_missing = allow_missing,
+                                   progress = progress)
   }
 
   plan$path_lib <- lib
