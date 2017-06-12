@@ -1,3 +1,37 @@
+##' Download multiple files.
+##' @title Download multiple files
+##' @param urls A character vector of urls
+##' @param dest_dir A single existing directory to download files into
+##' @param ...
+##'
+##' @param labels A character vector of labels to use to describe the
+##'   files being downloaded when printing (defaults to
+##'   \code{basename(urls)})
+##'
+##' @param overwrite Overwrite files that exist already?  If
+##'   \code{FALSE} (the default) then existing files are skipped.
+##'
+##' @param count Logical, indicating if a count of progress across the
+##'   urls should be included.
+##'
+##' @param dest_file If the files should be renamed as they are
+##'   downloaded, include a vector of filenames here the same length
+##'   as \code{urls}.  Directory components will be created, within
+##'   \code{dest_dir}.
+##'
+##' @param copy_file_urls Logical, indicating if \code{file:///} urls
+##'   should be copied into \code{dest_dir}
+##'
+##' @param progress Print a progress bar?
+##'
+##' @param report Print a summary?
+##'
+##' @return A character vector, the same length as \code{urls}, with
+##'   the destination file paths (even if no downloading was done).  A
+##'   failure to download a file (e.g., a 403 forbidden, 404 not
+##'   found, or general network error) will result in an R error.
+##'
+##' @export
 download_files <- function(urls, dest_dir, ..., labels = NULL,
                            overwrite = FALSE, count = TRUE,
                            dest_file = NULL, copy_file_urls = TRUE,
@@ -66,7 +100,6 @@ download_files <- function(urls, dest_dir, ..., labels = NULL,
   filename
 }
 
-## So what does download 1 file look like?
 download_file1 <- function(url, dest_dir, ..., label = NULL,
                            overwrite = FALSE,
                            dest_file = NULL, copy_file_url = TRUE,
