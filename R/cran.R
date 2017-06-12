@@ -136,8 +136,8 @@ download_rtools <- function(path, r_version = NULL, progress = progress) {
     stop("R version is too old")
   }
   CRAN <- "https://cloud.r-project.org"
-  path <- sprintf("bin/windows/Rtools/Rtools%s.exe", names(i)[[1L]])
-  url <- file.path(CRAN, path)
+  rtools_path <- sprintf("bin/windows/Rtools/Rtools%s.exe", names(i)[[1L]])
+  url <- file.path(CRAN, rtools_path)
   download_files(url, path, count = FALSE, progress = progress)
 }
 
