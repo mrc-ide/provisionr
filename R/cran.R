@@ -80,7 +80,8 @@ download_cran <- function(packages, path, r_version = NULL,
   path
 }
 
-download_r <- function(path, target = "windows", r_version = NULL) {
+download_r <- function(path, target = "windows", r_version = NULL,
+                       progress = NULL) {
   dir.create(path, FALSE, TRUE)
   r_version <- check_r_version(r_version)
   version_str <- as.character(r_version)
@@ -117,12 +118,12 @@ download_r <- function(path, target = "windows", r_version = NULL) {
   CRAN <- "https://cloud.r-project.org"
   url <- file.path(CRAN, sprintf(loc[target], version_str))
 
-  download_files(url, path, labels = target)
+  download_files(url, path, labels = target, progress = progress)
 
   file.path(path, basename(url))
 }
 
-download_rtools <- function(path, r_version = NULL) {
+download_rtools <- function(path, r_version = NULL, progress = progress) {
   dir.create(path, FALSE, TRUE)
   r_version <- check_r_version(r_version)
 
@@ -137,7 +138,7 @@ download_rtools <- function(path, r_version = NULL) {
   CRAN <- "https://cloud.r-project.org"
   path <- sprintf("bin/windows/Rtools/Rtools%s.exe", names(i)[[1L]])
   url <- file.path(CRAN, path)
-  download_files(url, path, count = FALSE)
+  download_files(url, path, count = FALSE, progress = progress)
 }
 
 package_url <- function(pkgs, available, type) {
