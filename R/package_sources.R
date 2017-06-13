@@ -94,11 +94,21 @@ R6_package_sources <- R6::R6Class(
         self$repos <- repos
       }
 
-
       ## Collect all the spec information here into a single vector, I
       ## think; that'll be easier to modify.
       if (!is.null(spec)) {
-        spec <- lapply(spec, parse_remote)
+        i <- grepl("^repo::", spec)
+        if (any(i)) {
+          tmp <- sub("^repo::", "", spec[i])
+          err <- tmp[!grepl("(https?|file)://", tmp)]
+          if (length(err) > 0L) {
+            stop("Invalid repo spec ", paste(err, collapse = ", "))
+          }
+          self$repos <- c(self$repos, tmp)
+          spec <- spec[!i]
+        }
+        spec <- vcapply(spec, function(s) parse_remote(s)$spec,
+                        USE.NAMES = FALSE)
       }
 
       if (!is.null(github)) {

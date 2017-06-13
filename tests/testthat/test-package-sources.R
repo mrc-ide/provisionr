@@ -177,6 +177,23 @@ test_that("export", {
   }
 })
 
+test_that("spec interface", {
+  expect_equal(package_sources(spec = character(0))$spec, character(0))
+  expect_equal(package_sources(spec = "foo/bar")$spec, "github::foo/bar")
+  expect_equal(package_sources(spec = "github::foo/bar")$spec,
+               "github::foo/bar")
+  expect_equal(package_sources(spec = c("a/b", "c/d"))$spec,
+               c("github::a/b", "github::c/d"))
+  expect_equal(package_sources(spec = "a/b", github = "c/d")$spec,
+               c("github::a/b", "github::c/d"))
+
+  s <- package_sources(spec = c("repo::https://foo.com", "a/b"))
+  expect_equal(s$repos, "https://foo.com")
+  expect_equal(s$spec, "github::a/b")
+  expect_error(package_sources(spec = c("repo::https://foo.com", "repo::a/b")),
+               "Invalid repo spec a/b")
+})
+
 ## fails because the github parse fails:
 ## x <- package_sources(github = "hello")$build()
 
