@@ -280,18 +280,3 @@ print.provisionr_plan <- function(x, ...) {
   cat(paste0(pkgs, "\n", collapse = ""))
   invisible(x)
 }
-
-cache <- new.env(parent = emptyenv())
-r_oldrel <- function() {
-  if (is.null(cache$r_oldrel)) {
-    cache$r_oldrel <- numeric_version(rversions::r_oldrel()[["version"]])
-  }
-  cache$r_oldrel
-}
-
-r_release <- function() {
-  if (is.null(cache$r_release)) {
-    cache$r_release <- numeric_version(rversions::r_release()[["version"]])
-  }
-  cache$r_release
-}

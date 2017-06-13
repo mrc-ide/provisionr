@@ -61,7 +61,7 @@ package_database <- function(repos, target, version, progress = NULL) {
     pkgs_bin <- available_packages(url_bin, version, os_type, subarch,
                                    progress = progress)
 
-    if (check_r_version(version)[1, 1:2] < r_oldrel()[1, 1:2]) {
+    if (check_r_version(version)[1, 1:2] < r_oldrel_version()[1, 1:2]) {
       ## Here are might have trouble with windows binaries so I am
       ## going to filter out old ones.  This might be too agressive
       ## but it should hopefully do the trick.

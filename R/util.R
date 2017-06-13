@@ -41,19 +41,6 @@ is_directory <- function(path) {
   file.info(path, extra_cols = FALSE)$isdir
 }
 
-check_r_version <- function(version) {
-  if (is.null(version)) {
-    version <- getRversion()
-  } else if (is.character(version)) {
-    version <- numeric_version(version)
-  } else if (!inherits(version, "numeric_version")) {
-    stop("Invalid type for version")
-  }
-  if (length(version) != 1L) {
-    stop("Expected a single version number")
-  }
-  version
-}
 
 r_version_str <- function(version, n = 2L) {
   v <- unclass(check_r_version(version))[[1]]

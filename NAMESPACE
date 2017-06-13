@@ -3,6 +3,7 @@
 S3method(as.character,package_sources)
 S3method(print,package_sources)
 S3method(print,provisionr_plan)
+export(check_r_version)
 export(download_cran)
 export(download_files)
 export(package_sources)
