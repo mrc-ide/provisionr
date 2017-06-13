@@ -54,7 +54,7 @@ download_cran <- function(packages, path, r_version = NULL,
   pkgs <- setdiff(pkgs, base_packages())
 
   ## source packages:
-  dest_src <- contrib_url(path, "src", version_str)
+  dest_src <- contrib_url(path, "src", version)
   dir.create(dest_src, FALSE, TRUE)
   provisionr_log("download", "source")
   res <- download_packages(pkgs, dest_src, db_src, "source", progress)
@@ -64,9 +64,9 @@ download_cran <- function(packages, path, r_version = NULL,
 
   ## Then binary:
   for (i in seq_along(target)) {
-    url_bin <- contrib_url(repos, target[[i]], version_str)
+    url_bin <- contrib_url(repos, target[[i]], version)
     db_bin <- available_packages(url_bin, progress = progress)
-    dest_bin <- contrib_url(path, target[[i]], version_str)
+    dest_bin <- contrib_url(path, target[[i]], version)
     dir.create(dest_bin, FALSE, TRUE)
     provisionr_log("download", sprintf("binary: %s", target[[i]]))
     res <- download_packages(pkgs, dest_bin, db_bin, binary_type[[i]], progress)

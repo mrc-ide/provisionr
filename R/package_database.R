@@ -104,7 +104,7 @@ os_type <- function(target) {
   }
 }
 
-contrib_url <- function(repos, target, version_str) {
+contrib_url <- function(repos, target, version) {
   assert_scalar_character("target")
   ## target should be:
   ##   src
@@ -115,10 +115,8 @@ contrib_url <- function(repos, target, version_str) {
   if (target == "src" || target == "linux") {
     path <- "src/contrib"
   } else {
-    version <- check_r_version(version_str)
-    if (is.null(version_str)) {
-      version_str <- r_version_str(version)
-    }
+    version <- check_r_version(version)
+    version_str <- r_version_str(version)
     target <- match_value(target, valid_targets(version))
     path <- file.path("bin", target, "contrib", version_str)
   }
