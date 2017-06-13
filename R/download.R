@@ -2,7 +2,7 @@
 ##' @title Download multiple files
 ##' @param urls A character vector of urls
 ##' @param dest_dir A single existing directory to download files into
-##' @param ...
+##' @param ... Currently ignored
 ##'
 ##' @param labels A character vector of labels to use to describe the
 ##'   files being downloaded when printing (defaults to

@@ -13,7 +13,7 @@ download_files(urls, dest_dir, ..., labels = NULL, overwrite = FALSE,
 
 \item{dest_dir}{A single existing directory to download files into}
 
-\item{...}{}
+\item{...}{Currently ignored}
 
 \item{labels}{A character vector of labels to use to describe the
 files being downloaded when printing (defaults to
