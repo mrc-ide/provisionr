@@ -54,7 +54,7 @@ package_database <- function(repos, target, version, progress = NULL) {
     pkgs_bin <- pkgs_src[integer(0), ]
   } else {
     version_str <- r_version_str(check_r_version(version), 2L)
-    url_bin <- contrib_url(repos, target, version_str)
+    url_bin <- contrib_url(repos, target, version)
     if (any(is_local)) {
       lapply(file_unurl(url_bin[is_local]), drat_ensure_PACKAGES)
     }
