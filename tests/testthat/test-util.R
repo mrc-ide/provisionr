@@ -10,9 +10,9 @@ test_that("check_r_version", {
   expect_error(check_r_version(1), "Invalid type")
   expect_error(check_r_version("one"))
   expect_error(check_r_version(c(v, v)),
-               "Expected a single version")
+               "version must be a scalar")
   expect_error(check_r_version(c("3.1.1", "3.1.2")),
-               "Expected a single version")
+               "version must be a scalar")
 })
 
 test_that("r_version_str", {
@@ -20,8 +20,10 @@ test_that("r_version_str", {
   expect_equal(r_version_str("3.1.1", 3), "3.1.1")
   expect_equal(r_version_str("3.1.1", 1), "3")
   expect_equal(r_version_str(numeric_version("3.1.1")), "3.1")
+})
 
-  expect_error(r_version_str("3.1", 3), "Unexpected version length")
+test_that("Unknown version", {
+  expect_error(r_version_str("2.9.9"), "2.9.9 is not a known R version")
 })
 
 test_that("file_unurl", {
