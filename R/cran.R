@@ -32,7 +32,7 @@ download_cran <- function(packages, path, r_version = NULL,
       target <- valid
     } else {
       if ("macosx" %in% target) {
-        target <- union(setdiff("macosx", target),
+        target <- union(setdiff(target, "macosx"),
                         grep("^macosx", valid, value = TRUE))
       }
       err <- setdiff(target, valid)
