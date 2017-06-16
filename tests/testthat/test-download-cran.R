@@ -22,3 +22,37 @@ test_that("download source", {
   expect_equal(dimnames(db2_win$all), dimnames(db_win$all))
   expect_equal(dimnames(db2_src$all), dimnames(db_src$all))
 })
+
+test_that("missing index", {
+  ## For now we keep this lacking in windows binaries for 3.4 and it
+  ## should work
+  src <- package_sources(repos = "https://richfitz.github.io/drat")
+  path <- tempfile()
+
+  download_cran("syncr", path, NULL, "windows", FALSE, src,
+                missing_index_is_error = FALSE, progress = PROGRESS)
+  db <- available_packages(file_url(contrib_url(path, "src", NULL)))
+  expect_true("syncr" %in% rownames(db))
+
+  ## This should fail:
+  expect_error(download_cran("syncr", path, NULL, "windows", FALSE, src,
+                             progress = PROGRESS))
+})
+
+test_that("missing index II", {
+  ## For now we keep this lacking in windows binaries for 3.4 and it
+  ## should work
+  src <- package_sources(repos = "https://dide-tools.github.io/drat")
+  path <- tempfile()
+  available_packages(contrib_url(src$repos, "src", NULL))
+
+  ## this does not download things properly and I don't see why
+  download_cran("syncr", path, NULL, "windows", FALSE, src,
+                missing_index_is_error = FALSE, progress = PROGRESS)
+  db <- available_packages(file_url(contrib_url(path, "src", NULL)))
+  expect_true("syncr" %in% rownames(db))
+
+  ## This should fail because of a missing index
+  expect_error(download_cran("syncr", path, "3.2.1", "windows", FALSE, src,
+                             progress = PROGRESS))
+})

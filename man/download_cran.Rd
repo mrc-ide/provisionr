@@ -5,7 +5,8 @@
 \title{Download some of CRAN}
 \usage{
 download_cran(packages, path, r_version = NULL, target = "windows",
-  suggests = FALSE, package_sources = NULL, progress = NULL)
+  suggests = FALSE, package_sources = NULL, missing_index_is_error = TRUE,
+  progress = NULL)
 }
 \arguments{
 \item{packages}{Character vector of packages to download}
@@ -19,6 +20,11 @@ download_cran(packages, path, r_version = NULL, target = "windows",
 \item{suggests}{Include suggested packages too?}
 
 \item{package_sources}{A \code{provisionr::package_sources} object}
+
+\item{missing_index_is_error}{Is a missing PACKAGES index an
+error?  Set this to \code{FALSE} when downloading from
+incomplete repositories (e.g., a drat repo that contains only
+source files if you are trying to download binaries)}
 
 \item{progress}{Control progress bar printing}
 }

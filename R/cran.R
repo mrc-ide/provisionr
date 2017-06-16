@@ -7,12 +7,17 @@
 ##' @param target Target platform (use "ALL" for all platforms)
 ##' @param suggests Include suggested packages too?
 ##' @param package_sources A \code{provisionr::package_sources} object
+##' @param missing_index_is_error Is a missing PACKAGES index an
+##'   error?  Set this to \code{FALSE} when downloading from
+##'   incomplete repositories (e.g., a drat repo that contains only
+##'   source files if you are trying to download binaries)
 ##' @param progress Control progress bar printing
 ##' @export
 download_cran <- function(packages, path, r_version = NULL,
                           target = "windows",
                           suggests = FALSE,
                           package_sources = NULL,
+                          missing_index_is_error = TRUE,
                           progress = NULL) {
   ## TODO: something to organise pruning....
   ## TODO: handle vectorised target and r_version
@@ -46,7 +51,9 @@ download_cran <- function(packages, path, r_version = NULL,
 
   ## TODO: change this to suck less.
   url_src <- contrib_url(repos, "src", NULL)
-  db_src <- available_packages(url_src, progress = progress)
+  db_src <- available_packages(url_src,
+                               missing_index_is_error = missing_index_is_error,
+                               progress = progress)
 
   ## TODO: this will fail in the (very) unlikely situation where there
   ## are binary only packages to deal with.
@@ -65,7 +72,10 @@ download_cran <- function(packages, path, r_version = NULL,
   ## Then binary:
   for (i in seq_along(target)) {
     url_bin <- contrib_url(repos, target[[i]], version)
-    db_bin <- available_packages(url_bin, progress = progress)
+    db_bin <- available_packages(
+      url_bin,
+      missing_index_is_error = missing_index_is_error,
+      progress = progress)
     dest_bin <- contrib_url(path, target[[i]], version)
     dir.create(dest_bin, FALSE, TRUE)
     provisionr_log("download", sprintf("binary: %s", target[[i]]))

@@ -98,6 +98,7 @@ read_available_packages <- function(url, use_rds, missing_index_is_error,
     } else if (missing_index_is_error) {
       stop("No package index at ", index)
     } else {
+      provisionr_log("no index", index)
       return(matrix(character(0)))
     }
   } else if (exists(url, cache)) {
@@ -124,6 +125,7 @@ read_available_packages <- function(url, use_rds, missing_index_is_error,
       if (missing_index_is_error) {
         stop(path)
       } else {
+        provisionr_log("no index", url)
         return(matrix(character(0)))
       }
     }
