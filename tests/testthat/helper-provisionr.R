@@ -55,3 +55,5 @@ if (!file.exists("local_cran")) {
 options(repos = c(CRAN = file_url("local_cran"),
                   CRAN = "https://cran.rstudio.com"),
         install.packages.check.source = "no")
+
+PROGRESS <- FALSE
