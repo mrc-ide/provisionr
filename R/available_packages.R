@@ -2,7 +2,7 @@
 ## like available.packages but to allow filtering against
 available_packages <- function(urls, r_version = NULL, os_type = NULL,
                                subarch = NULL, drop_duplicates = TRUE,
-                               progress = NULL) {
+                               missing_index_is_error = TRUE, progress = NULL) {
   if (is.null(r_version)) {
     use_rds <- getRversion() >= numeric_version("3.4.0")
   } else {
@@ -10,7 +10,8 @@ available_packages <- function(urls, r_version = NULL, os_type = NULL,
     use_rds <- r_version >= numeric_version("3.4.0")
   }
   fields <- colnames(utils::available.packages(NULL))
-  dat <- lapply(urls, read_available_packages, use_rds, progress)
+  dat <- lapply(urls, read_available_packages,
+                use_rds, missing_index_is_error, progress)
   ret <- do.call("rbind", lapply(dat, clean_matrix, fields))
   rownames(ret) <- unname(ret[, "Package"])
   filter_available_packages(ret, r_version, os_type, subarch, drop_duplicates)
@@ -30,7 +31,7 @@ filter_available_packages <- function(db, r_version = NULL,
 }
 
 filter_available_packages_r_version <- function(db, r_version) {
-  if (!is.null(r_version)) {
+  if (!is.null(r_version) && nrow(db) > 0L) {
     ## This takes ~0.1s so that's a bit slower than ideal
     v <- parse_deps_version(db[, "Depends"])
     f <- function(x) {
@@ -88,9 +89,17 @@ filter_available_packages_drop_duplicates <- function(db, drop_duplicates) {
 }
 
 cache <- new.env(parent = emptyenv())
-read_available_packages <- function(url, use_rds, progress) {
+read_available_packages <- function(url, use_rds, missing_index_is_error,
+                                    progress) {
   if (is_file_url(url)) {
-    d <- read.dcf(file.path(file_unurl(url), "PACKAGES"))
+    index <- file.path(file_unurl(url), "PACKAGES")
+    if (file.exists(index)) {
+      d <- read.dcf(index)
+    } else if (missing_index_is_error) {
+      stop("No package index at ", index)
+    } else {
+      return(matrix(character(0)))
+    }
   } else if (exists(url, cache)) {
     d <- cache[[url]]
   } else {
@@ -112,7 +121,11 @@ read_available_packages <- function(url, use_rds, progress) {
       }
     }
     if (inherits(path, "error")) {
-      stop(path)
+      if (missing_index_is_error) {
+        stop(path)
+      } else {
+        return(matrix(character(0)))
+      }
     }
   }
   if (nrow(d) > 0L) {
