@@ -21,7 +21,7 @@ test_that("missing index: file", {
   url <- contrib_url(cran, "windows", "3.2.1")
 
   d <- available_packages(url, progress = FALSE, r_version = "3.2.1",
-                          missing_is_error = FALSE)
+                          missing_index_is_error = FALSE)
   expect_is(d, "matrix")
   expect_equal(nrow(d), 0)
   expect_true(all(c("Package", "Repository") %in% colnames(d)))
@@ -35,7 +35,7 @@ test_that("missing index: http", {
   url <- contrib_url(cran, "windows", "3.2.1")
 
   d <- available_packages(url, progress = FALSE, r_version = "3.2.1",
-                          missing_is_error = FALSE)
+                          missing_index_is_error = FALSE)
   expect_is(d, "matrix")
   expect_equal(nrow(d), 0)
   expect_true(all(c("Package", "Repository") %in% colnames(d)))
