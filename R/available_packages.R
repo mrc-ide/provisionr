@@ -39,7 +39,7 @@ filter_available_packages_r_version <- function(db, r_version) {
       if (any(i)) {
         x[i, 2:3]
       } else {
-        c(">=", "0.0.0")
+        c(operator = ">=", version = "0.0.0")
       }
     }
     y <- vapply(v, f, character(2))
