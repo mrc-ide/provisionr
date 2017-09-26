@@ -65,7 +65,7 @@ test_that("build (github)", {
 })
 
 test_that("build (github subdir)", {
-  src <- package_sources(github = "richfitz/provisionr/tests/testthat/hello")
+  src <- package_sources(github = "mrc-ide/provisionr/tests/testthat/hello")
   expect_null(src$local_drat)
 
   src$local_drat <- tempfile()
