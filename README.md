@@ -28,3 +28,11 @@ and have a library built at `path` containing `packages` (and all their dependen
 At the same time, do all this while allowing installation of github and local package sources (including detecting and acting on upgrades).
 
 The package differs from [packrat](https://github.com/rstudio/packrat) in that it is not trying to create a strictly versioned library (though that may included in a future release).
+
+## Installation
+
+```r
+# install.packages("drat")
+drat:::add("mrc-ide")
+install.packages("provisionr")
+```
