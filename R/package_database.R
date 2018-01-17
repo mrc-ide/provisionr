@@ -59,7 +59,8 @@ package_database <- function(repos, target, version, progress = NULL) {
       lapply(file_unurl(url_bin[is_local]), drat_ensure_PACKAGES)
     }
     pkgs_bin <- available_packages(url_bin, version, os_type, subarch,
-                                   progress = progress)
+                                   progress = progress,
+                                   missing_index_is_error = FALSE)
 
     if (check_r_version(version)[1, 1:2] < r_oldrel_version()[1, 1:2]) {
       ## Here are might have trouble with windows binaries so I am
