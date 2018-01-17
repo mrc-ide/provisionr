@@ -2,7 +2,7 @@
 
 [![Project Status: WIP - Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](http://www.repostatus.org/badges/latest/wip.svg)](http://www.repostatus.org/#wip)
 [![Travis-CI Build Status](https://travis-ci.org/mrc-ide/provisionr.svg?branch=master)](https://travis-ci.org/mrc-ide/provisionr)
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/mrc-ide/provisionr?branch=master&svg=true)](https://ci.appveyor.com/project/mrc-ide/provisionr)
+[![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/5c1iugo4h24v7o6b/branch/master?svg=true)](https://ci.appveyor.com/project/richfitz/provisionr-7pe94/branch/master)
 [![codecov.io](https://codecov.io/github/mrc-ide/provisionr/coverage.svg?branch=master)](https://codecov.io/github/mrc-ide/provisionr?branch=master)
 
 This package aims to fill a hole in provisioning a set of packages.  There are some trouble spots that it aims to fill
