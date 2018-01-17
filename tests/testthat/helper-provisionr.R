@@ -33,7 +33,7 @@ read_package_version <- function(path) {
 }
 
 make_local_cran <- function(path = "local_cran") {
-  packages <- c("devtools", "progress", "ape", "lattice", "nlme")
+  packages <- c("devtools", "progress", "ape", "lattice", "nlme", "zip")
   src <- package_sources(cran = "https://cran.rstudio.com")
   download_cran(packages, path, NULL, "ALL", FALSE, src)
 }

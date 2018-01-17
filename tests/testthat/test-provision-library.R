@@ -12,10 +12,10 @@ test_that("own platform, single package, not compiled", {
 test_that("own platform, single package, compiled", {
   skip_on_travis()
   lib <- tempfile()
-  res <- provision_library("ape", lib, quiet = TRUE, progress = FALSE)
-  expect_equal(dir(lib), "ape")
-  expect_equal(.packages(TRUE, lib), "ape")
-  expect_equal(res$packages, "ape")
+  res <- provision_library("zip", lib, quiet = TRUE, progress = FALSE)
+  expect_equal(dir(lib), "zip")
+  expect_equal(.packages(TRUE, lib), "zip")
+  expect_equal(res$packages, "zip")
 })
 
 test_that("own platform, multiple packages", {
@@ -42,10 +42,10 @@ test_that("cross, single package, not compiled", {
 
 test_that("cross, single package, compiled", {
   lib <- tempfile()
-  res <- provision_library("ape", lib, platform = "windows", progress = FALSE)
-  expect_equal(dir(lib), "ape")
-  expect_equal(.packages(TRUE, lib), "ape")
-  expect_equal(res$packages, "ape")
+  res <- provision_library("zip", lib, platform = "windows", progress = FALSE)
+  expect_equal(dir(lib), "zip")
+  expect_equal(.packages(TRUE, lib), "zip")
+  expect_equal(res$packages, "zip")
 })
 
 test_that("cross, multiple packages", {

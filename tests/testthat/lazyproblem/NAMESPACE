@@ -1,3 +1,2 @@
 exportPattern("^[^\\.]")
-# `import(ape)
-importFrom(ape, rcoal)
+importFrom(zip, zip)

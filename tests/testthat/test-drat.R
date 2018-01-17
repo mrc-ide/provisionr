@@ -77,7 +77,7 @@ test_that("binary package", {
   dir.create(tmp)
 
   url <- contrib_url(sanitise_options_cran()[[1]], "windows", NULL)
-  res <- download.packages("ape", tmp, contriburl = url, type = "win.binary")
+  res <- download.packages("zip", tmp, contriburl = url, type = "win.binary")
   pkg <- res[[2]]
 
   src <- package_sources(local = pkg)
@@ -87,7 +87,7 @@ test_that("binary package", {
   db <- package_database(src$local_drat, "windows", NULL)
   expect_equal(nrow(db$src), 0)
   expect_equal(nrow(db$bin), 1)
-  expect_equal(rownames(db$bin), "ape")
+  expect_equal(rownames(db$bin), "zip")
 })
 
 test_that("local_drat in constructor", {

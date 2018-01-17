@@ -4,11 +4,11 @@ test_that("binary cross install", {
   lib <- tempfile()
   db <- package_database(c(CRAN = "https://cran.rstudio.com"), "windows", NULL,
                          progress = FALSE)
-  packages <- "ape"
+  packages <- "zip"
   plan <- plan_installation(packages, db, lib, "upgrade")
-  res <- cross_install_packages("ape", lib, db, plan, progress = FALSE)
-  expect_equal(dir(lib), "ape")
-  expect_true(file.exists(file.path(lib, "ape", "libs", "x64", "ape.dll")))
+  res <- cross_install_packages("zip", lib, db, plan, progress = FALSE)
+  expect_equal(dir(lib), "zip")
+  expect_true(file.exists(file.path(lib, "zip", "libs", "x64", "zip.dll")))
 })
 
 test_that("binary cross install with deps", {
@@ -93,8 +93,8 @@ test_that("cross install package that triggers load", {
 
   ## Need to get a copy of a binary package that will conflict loaded
   ## for lazyloading to fail.
-  provision_library("ape", lib_us, quiet = TRUE, progress = FALSE)
-  expect_true("ape" %in% dir(lib_us))
+  provision_library("zip", lib_us, quiet = TRUE, progress = FALSE)
+  expect_true("zip" %in% dir(lib_us))
 
   ## TODO: consider doing the target platform differently here; go with
   ##
@@ -109,39 +109,39 @@ test_that("cross install package that triggers load", {
                       src = drat, progress = FALSE))
 
   pkgs <- .packages(TRUE, lib_other)
-  expect_equal(sort(pkgs), sort(c("ape", "lazyproblem")))
+  expect_equal(sort(pkgs), sort(c("zip", "lazyproblem")))
 })
 
 test_that("installed_action", {
   lib <- tempfile()
 
   msgs <- capture_messages(
-    provision_library("ape", lib, platform = "windows", progress = FALSE))
+    provision_library("zip", lib, platform = "windows", progress = FALSE))
   expect_true(any(grepl("cross", msgs)))
-  expect_equal(dir(lib), "ape")
+  expect_true("zip" %in% dir(lib))
 
   ## Skip reinstallation:
   msgs <- capture_messages(
-    provision_library("ape", lib, platform = "windows",
+    provision_library("zip", lib, platform = "windows",
                       installed_action = "skip", progress = FALSE))
   expect_false(any(grepl("cross", msgs)))
 
   ## Upgrade (but don't)
   msgs <- capture_messages(
-    provision_library("ape", lib, platform = "windows",
+    provision_library("zip", lib, platform = "windows",
                       installed_action = "upgrade", progress = FALSE))
   expect_false(any(grepl("cross", msgs)))
 
   ## Upgrade (but do) -- this does not work!
-  alter_package_version(file.path(lib, "ape"), FALSE)
+  alter_package_version(file.path(lib, "zip"), FALSE)
   msgs <- capture_messages(
-    provision_library("ape", lib, platform = "windows",
+    provision_library("zip", lib, platform = "windows",
                       installed_action = "upgrade", progress = FALSE))
   expect_true(any(grepl("cross", msgs)))
 
   ## Replace:
   msgs <- capture_messages(
-    provision_library("ape", lib, platform = "windows",
+    provision_library("zip", lib, platform = "windows",
                       installed_action = "replace", progress = FALSE))
   expect_true(any(grepl("cross", msgs)))
 })
@@ -172,17 +172,17 @@ test_that("missing compiled packages", {
 test_that("prefer drat files", {
   ## TODO: this can actually point at the source file already in the
   ## same repo.
-  src <- package_sources(github = "cran/ape")
+  src <- package_sources(github = "cran/zip")
   drat <- src$build(progress = FALSE)
   path <- tempfile()
-  ans <- provision_library("ape", path, platform = "windows", src = drat,
+  ans <- provision_library("zip", path, platform = "windows", src = drat,
                            allow_missing = TRUE, progress = FALSE)
-  expect_equal(rownames(ans$missing), "ape")
+  expect_equal(rownames(ans$missing), "zip")
   expect_equal(dir(path), character(0))
 })
 
 test_that("don't cross install locally", {
-  expect_error(cross_install_packages("ape", .libPaths()[[1]]),
+  expect_error(cross_install_packages("zip", .libPaths()[[1]]),
                "Do not use cross_install_packages to install into current")
 })
 
@@ -205,14 +205,14 @@ test_that("missing packages", {
 })
 
 test_that("remove existing packages on upgrade", {
-  packages <- "ape"
+  packages <- "zip"
   lib <- tempfile()
   db <- package_database(getOption("repos")[[1L]], "windows", NULL,
                          progress = FALSE)
   plan <- plan_installation(packages, db, lib, "replace")
   cross_install_packages(packages, lib, db, plan, progress = FALSE)
 
-  f <- file.path(lib, "ape", "provisionr")
+  f <- file.path(lib, "zip", "provisionr")
   writeLines("provisionr", f)
   expect_true(file.exists(f))
 
