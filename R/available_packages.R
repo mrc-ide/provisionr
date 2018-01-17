@@ -136,5 +136,9 @@ read_available_packages <- function(url, use_rds, missing_index_is_error,
   if (!("Repository" %in% colnames(d)) && nrow(d) > 0) {
     d <- cbind(d, Repository = url)
   }
+  if ("Path" %in% colnames(d)) {
+    i <- !is.na(d[, "Path"])
+    d[i, "Repository"] <- paste0(d[i, "Repository"], "/", d[i, "Path"])
+  }
   d
 }
