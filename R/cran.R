@@ -52,6 +52,7 @@ download_cran <- function(packages, path, r_version = NULL,
   ## TODO: change this to suck less.
   url_src <- contrib_url(repos, "src", NULL)
   db_src <- available_packages(url_src,
+                               r_version = version,
                                missing_index_is_error = missing_index_is_error,
                                progress = progress)
 
