@@ -34,7 +34,7 @@ parse_remote <- function(spec) {
   }
 
   if (src == "github") {
-    res <- remotes::parse_github_repo_spec(spec)
+    res <- parse_repo_spec(spec)
     res$url_package <- github_url_zip(res)
     res$url_package_api <- github_url_zip_api(res)
     res$url_description <- github_url_description(res)
@@ -308,4 +308,11 @@ md5sum2 <- function(paths) {
   i <- !is_directory(paths)
   ret[i] <- unname(tools::md5sum(paths[i]))
   ret
+}
+
+parse_repo_spec <- function(spec) {
+  x <- remotes::parse_github_repo_spec(spec)
+  i <- !vlapply(x, nzchar)
+  x[i] <- list(NULL)
+  x
 }

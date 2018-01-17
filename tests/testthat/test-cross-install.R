@@ -172,7 +172,7 @@ test_that("missing compiled packages", {
 test_that("prefer drat files", {
   ## TODO: this can actually point at the source file already in the
   ## same repo.
-  src <- package_sources(github = "cran/zip")
+  src <- package_sources(github = "r-lib/zip@8a5496")
   drat <- src$build(progress = FALSE)
   path <- tempfile()
   ans <- provision_library("zip", path, platform = "windows", src = drat,
