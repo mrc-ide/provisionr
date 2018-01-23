@@ -45,8 +45,8 @@ plan_installation <- function(packages, db, lib, installed_action,
     x[is.na(x)] <- "0.0.0"
     numeric_version(x)
   }
-  v_bin <- nv(db$bin[match(packages, db$bin), "Version"])
-  v_src <- nv(db$src[match(packages, db$src), "Version"])
+  v_bin <- nv(db$bin[match(packages, rownames(db$bin)), "Version"])
+  v_src <- nv(db$src[match(packages, rownames(db$src)), "Version"])
   avoid_bin <- intersect(packages[v_src > v_bin], rownames(db$bin))
 
   if (length(avoid_bin) > 0L) {
