@@ -1,6 +1,8 @@
 context("available_packages")
 
 test_that("comparible to base: http", {
+  skip_on_appveyor()
+  skip_on_travis()
   cran <- "https://cran.rstudio.com"
   url <- contrib_url(cran, "src", NULL)
   cmp <- available.packages(url, filters = "duplicates")
