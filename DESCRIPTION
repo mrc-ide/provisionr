@@ -17,5 +17,6 @@ Imports:
     storr (>= 1.1.0),
     withr
 Suggests:
-    testthat
+    testthat,
+    zip
 RoxygenNote: 6.0.1
