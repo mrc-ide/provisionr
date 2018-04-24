@@ -208,16 +208,6 @@ drat_ensure_PACKAGES <- function(path) {
   }
 }
 
-valid_platforms <- function(version = NULL) {
-  version2 <- check_r_version(version)[1, 1:2]
-  c("windows",
-    "linux",
-    if (version2 <= numeric_version("3.2")) "macosx",
-    if (version2 >= numeric_version("3.1") &&
-        version2 <= numeric_version("3.3")) "macosx/mavericks",
-    if (version2 >= numeric_version("3.4")) "macosx/el-capitan")
-}
-
 check_version <- function(packages, lib, db, local_drat) {
   current <- packages %in% .packages(TRUE, lib)
   if (any(current)) {
