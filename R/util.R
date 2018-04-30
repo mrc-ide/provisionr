@@ -76,3 +76,8 @@ clean_matrix <- function(m, cols) {
   }
   m[, cols, drop = FALSE]
 }
+
+
+which_max_version <- function(v) {
+  which(v == max(v))
+}

@@ -37,6 +37,10 @@ filter_available_packages_r_version <- function(db, r_version) {
     f <- function(x) {
       i <- x[, "name"] == "R"
       if (any(i)) {
+        if (sum(i) > 1L) {
+          ## stopifnot(x[i, "operator"] %in% c(">", ">="))
+          i <- which(i)[which_max_version(numeric_version(x[i, "version"]))]
+        }
         x[i, 2:3]
       } else {
         c(operator = ">=", version = "0.0.0")
