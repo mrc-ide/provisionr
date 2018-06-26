@@ -152,7 +152,7 @@ progress_multi <- function(i, labels, count, progress) {
       if (is.null(bar)) {
         if (total == 0) {
           fmt <- paste0(prefix, " [ :bytes in :elapsed ]")
-          total <- 1e-8 # arbitrarily big
+          total <- 1e8 # arbitrarily big
         } else {
           fmt <- paste0(prefix, " [:percent :bar]")
         }
