@@ -46,3 +46,20 @@ test_that("add github packages", {
   expect_equal(tmp$src$spec,
                c("github::foo/bar", "github::another/packages"))
 })
+
+
+test_that("error when no description present", {
+  expect_error(provision_dependencies_read(tempfile()),
+               "Did not find a DESCRIPTION file at")
+})
+
+
+test_that("bootstrap", {
+  path <- tempfile()
+  dir.create(path)
+  writeLines(c("Imports: R6"), file.path(path, "DESCRIPTION"))
+
+  withr::with_dir(path,
+                  provision_dependencies_bootstrap(strict_lib = FALSE))
+  expect_true(file.exists(file.path(path, "bootstrap.R")))
+})
