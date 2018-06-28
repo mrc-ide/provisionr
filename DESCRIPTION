@@ -15,7 +15,8 @@ Imports:
     remotes,
     rversions,
     storr (>= 1.1.0),
-    withr
+    withr,
+    yaml
 Suggests:
     testthat,
     zip
