@@ -162,7 +162,11 @@ progress_multi <- function(i, labels, count, progress) {
       if (total == 0) {
         bar$tick(now)
       } else {
-        bar$tick(now - seen)
+        if (now < total) {
+          bar$tick(now - seen)
+        } else {
+          bar$terminate()
+        }
         seen <<- now
       }
 
