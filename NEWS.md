@@ -1,3 +1,8 @@
+# provisionr 0.1.8
+
+* Fix bug in progress bar reporting
+* Add new package dependency provisioning (`provision_dependencies`)
+
 # provisionr 0.1.6
 
 * Fix odd bug during installation of packages that are not on CRAN but suggested by CRAN (as for glmmADMB via HeritSeq).
