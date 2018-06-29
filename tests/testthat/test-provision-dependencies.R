@@ -61,5 +61,5 @@ test_that("bootstrap", {
 
   withr::with_dir(path,
                   provision_dependencies_bootstrap(strict_lib = FALSE))
-  expect_true(file.exists(file.path(path, "bootstrap.R")))
+  expect_true(file.exists(file.path(path, "bootstrap")))
 })
