@@ -97,13 +97,13 @@ provision_dependencies_bootstrap <- function(lib = ".packages", src = NULL,
     } else {
       .libPaths(c(lib, .libPaths()))
     }
-    repos <- c("https://cran.rstudio.com", "https://mrc-ide.github.io/drat/")
     has_provisionr <- function() {
       requireNamespace("provisionr", quietly = TRUE,
                        lib.loc = if (strict_lib) lib else NULL)
     }
     if (!has_provisionr()) {
       message("Installing provisionr")
+      repos <- c("https://cran.rstudio.com", "https://mrc-ide.github.io/drat/")
       install.packages("provisionr", repos = repos, lib = lib)
     }
     if (!has_provisionr()) {
