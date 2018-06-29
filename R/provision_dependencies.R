@@ -77,12 +77,17 @@ provision_dependencies_bootstrap <- function(lib = ".packages", src = NULL,
     stop("Expected a DESCRIPTION file in this directory")
   }
   code <- substitute({
-    args <- commandArgs(trailingOnly = FALSE)
-    file <- grep("^--file=", args, value = TRUE)
-    if (length(file) != 1L) {
-      stop("Could not determine path to running script")
+    root <- Sys.getenv("BOOTSTRAP_ROOT", NA_character_)
+    if (is.na(root)) {
+      args <- commandArgs(trailingOnly = FALSE)
+      file <- grep("^--file=", args, value = TRUE)
+      if (length(file) != 1L) {
+        stop("Could not determine path to running script")
+      }
+      here <- dirname(normalizePath(sub("^--file=", "", file)))
+    } else {
+      here <- normalizePath(root, mustWork = TRUE)
     }
-    here <- dirname(normalizePath(sub("^--file=", "", file)))
     message(sprintf("Working in '%s'", here))
     setwd(here)
     dir.create(lib, FALSE)
