@@ -21,7 +21,7 @@
 ##' @export
 provision_dependencies <- function(lib, path_description = ".", ...,
                                    src = NULL, read_travis = FALSE) {
-  dat <- provision_dependencies_read(path_description, src)
+  dat <- provision_dependencies_read(path_description, src, read_travis)
   provision_library(packages = dat$packages, lib = lib, src = dat$src, ...)
 }
 
