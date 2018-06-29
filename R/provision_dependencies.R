@@ -92,6 +92,15 @@ provision_dependencies_bootstrap <- function(lib = ".packages", src = NULL,
     setwd(here)
     dir.create(lib, FALSE)
 
+    strict_lib_env <- Sys.getenv("BOOTSTRAP_STRICT_LIB", NA_character_)
+    if (is.na(strict_lib_env)) {
+      strict_lib <- strict_lib_default
+    } else {
+      strict_lib <- as.logical(strict_lib_env)
+      if (is.na(strict_lib)) {
+        strict_lib <- strict_lib_default
+      }
+    }
     if (strict_lib) {
       .libPaths(lib)
     } else {
@@ -115,7 +124,7 @@ provision_dependencies_bootstrap <- function(lib = ".packages", src = NULL,
     if (!file.exists(".Renviron")) {
       writeLines(sprintf('R_LIBS_USER="%s"', lib), ".Renviron")
     }
-  }, list(lib = lib, strict_lib = strict_lib,
+  }, list(lib = lib, strict_lib_default = strict_lib,
           src_list = src, read_travis = read_travis))
 
   dest <- "bootstrap"
