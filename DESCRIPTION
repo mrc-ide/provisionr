@@ -2,7 +2,7 @@ Package: provisionr
 Title: Provision a Library
 Author: Rich FitzJohn
 Maintainer: Rich FitzJohn <rich.fitzjohn@gmail.com>
-Version: 0.1.9
+Version: 0.1.10
 Description: Provision a set of packages into a new library, possibly for
     use on a different architecture.
 License: MIT + file LICENSE
