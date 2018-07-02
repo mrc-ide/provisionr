@@ -71,6 +71,7 @@ provision_dependencies_bootstrap <- function(lib = ".packages", src = NULL,
       src <- NULL
     } else {
       src <- src_list
+      class(src) <- "package_sources_list"
     }
   }
   if (!file.exists("DESCRIPTION")) {
