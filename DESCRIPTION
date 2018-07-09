@@ -11,7 +11,7 @@ Imports:
     curl,
     drat,
     prettyunits,
-    progress,
+    progress (>= 1.2.0),
     remotes,
     rversions,
     storr (>= 1.1.0),
