@@ -160,12 +160,12 @@ progress_multi <- function(i, labels, count, progress) {
                                            show_after = 0)
       }
       if (total == 0) {
-        bar$tick(now)
+        tryCatch(bar$tick(now), error = function(e) NULL)
       } else {
         if (now < total) {
-          bar$tick(now - seen)
+          tryCatch(bar$tick(now - seen), error = function(e) NULL)
         } else {
-          bar$terminate()
+          tryCatch(bar$terminate(), error = function(e) NULL)
         }
         seen <<- now
       }
