@@ -165,8 +165,7 @@ test_that("missing compiled packages", {
                "Packages need compilation")
   ans <- provision_library("dde", path, platform = "windows", src = drat,
                            allow_missing = TRUE, progress = FALSE)
-  expect_equal(sort(rownames(ans$missing)),
-               sort(c("dde", "ring")))
+  expect_equal(rownames(ans$missing), "dde")
 })
 
 test_that("prefer drat files", {
