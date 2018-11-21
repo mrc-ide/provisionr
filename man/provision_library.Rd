@@ -5,9 +5,9 @@
 \title{Create or update a library}
 \usage{
 provision_library(packages, lib, platform = NULL, version = NULL,
-  src = NULL, check_dependencies = TRUE, installed_action = "upgrade",
-  allow_missing = FALSE, refresh_drat = FALSE, quiet = FALSE,
-  progress = NULL)
+  src = NULL, check_dependencies = TRUE,
+  installed_action = "upgrade", allow_missing = FALSE,
+  refresh_drat = FALSE, quiet = FALSE, progress = NULL)
 }
 \arguments{
 \item{packages}{A character vector of packages to include}

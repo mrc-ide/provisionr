@@ -5,8 +5,8 @@
 \title{Download some of CRAN}
 \usage{
 download_cran(packages, path, r_version = NULL, target = "windows",
-  suggests = FALSE, package_sources = NULL, missing_index_is_error = TRUE,
-  progress = NULL)
+  suggests = FALSE, package_sources = NULL,
+  missing_index_is_error = TRUE, progress = NULL)
 }
 \arguments{
 \item{packages}{Character vector of packages to download}
