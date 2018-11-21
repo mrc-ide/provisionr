@@ -1,3 +1,7 @@
+# provisionr 0.1.12
+
+* Detect and use GITHUB_PAT for downloading private repositories
+
 # provisionr 0.1.8
 
 * Fix bug in progress bar reporting

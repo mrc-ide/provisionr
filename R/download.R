@@ -26,6 +26,8 @@
 ##'
 ##' @param report Print a summary?
 ##'
+##' @param headers Named character vector of HTTP headers (optional)
+##'
 ##' @return A character vector, the same length as \code{urls}, with
 ##'   the destination file paths (even if no downloading was done).  A
 ##'   failure to download a file (e.g., a 403 forbidden, 404 not
@@ -35,7 +37,7 @@
 download_files <- function(urls, dest_dir, ..., labels = NULL,
                            overwrite = FALSE, count = TRUE,
                            dest_file = NULL, copy_file_urls = TRUE,
-                           progress = NULL, report = TRUE) {
+                           progress = NULL, report = TRUE, headers = NULL) {
   if (!is_directory(dest_dir)) {
     stop("dest_dir must be a directory")
   }
@@ -82,6 +84,9 @@ download_files <- function(urls, dest_dir, ..., labels = NULL,
       if (file.exists(f_dl)) {
         stop("Remove stale download file: ", f_dl)
       }
+      if (!is.null(headers)) {
+        curl::handle_setheaders(h, .list = headers)
+      }
       res <- withCallingHandlers(curl::curl_fetch_disk(u, f_dl, h),
                                  error = function(e) file.remove(f_dl))
       if (res$status_code > 300) {
@@ -103,12 +108,12 @@ download_files <- function(urls, dest_dir, ..., labels = NULL,
 download_file1 <- function(url, dest_dir, ..., label = NULL,
                            overwrite = FALSE,
                            dest_file = NULL, copy_file_url = TRUE,
-                           progress = NULL, report = TRUE) {
+                           progress = NULL, report = TRUE, headers = NULL) {
   download_files(url, dest_dir, labels = label,
                  overwrite = overwrite, dest_file = dest_file,
                  copy_file_urls = copy_file_url,
                  progress = progress, report = report,
-                 count = FALSE)
+                 count = FALSE, headers = headers)
 }
 
 download_error <- function(r) {

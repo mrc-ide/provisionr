@@ -6,7 +6,7 @@
 \usage{
 download_files(urls, dest_dir, ..., labels = NULL, overwrite = FALSE,
   count = TRUE, dest_file = NULL, copy_file_urls = TRUE,
-  progress = NULL, report = TRUE)
+  progress = NULL, report = TRUE, headers = NULL)
 }
 \arguments{
 \item{urls}{A character vector of urls}
@@ -36,6 +36,8 @@ should be copied into \code{dest_dir}}
 \item{progress}{Print a progress bar?}
 
 \item{report}{Print a summary?}
+
+\item{headers}{Named character vector of HTTP headers (optional)}
 }
 \value{
 A character vector, the same length as \code{urls}, with

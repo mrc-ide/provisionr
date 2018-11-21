@@ -144,7 +144,8 @@ github_build_package <- function(x, progress = NULL) {
   dir.create(tmp)
   pkg <- download_file1(x$url_package, tmp, label = x$spec,
                         dest_file = paste0(x$repo, ".zip"),
-                        progress = progress)
+                        progress = progress,
+                        headers = github_headers())
   unzip(pkg, exdir = tmp)
   file.remove(pkg)
   unpacked <- target <- dir(tmp, full.names = TRUE)
@@ -154,6 +155,16 @@ github_build_package <- function(x, progress = NULL) {
   }
   build_package(target, dest = tmp)
 }
+
+
+github_headers <- function() {
+  pat <- Sys.getenv("GITHUB_PAT", "")
+  if (!nzchar(pat)) {
+    return(NULL)
+  }
+  c("Authorization" = paste("token", pat))
+}
+
 
 github_url_zip <- function(x) {
   sprintf("https://github.com/%s/%s/archive/%s.zip",
