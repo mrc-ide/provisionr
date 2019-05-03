@@ -10,3 +10,4 @@
 ^appveyor\.yml$
 ^\.lintr$
 ^tests/testthat/bootstrap/\.packages$
+^tests/testthat/local_cran_build\.R$
