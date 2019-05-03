@@ -9,7 +9,7 @@ call_system <- function(command, args, env = character(), max_lines = 20,
   ok <- attr(res, "status")
   if (!is.null(ok) && ok != 0) {
     max_nc <- getOption("warning.length")
-    cmd <- paste(c(shQuote(command), args), collapse = " ")
+    cmd <- paste(c(shQuote(command), shQuote(args)), collapse = " ")
     msg <- sprintf("Running command:\n  %s\nhad status %d", cmd, ok)
     errmsg <- attr(cmd, "errmsg")
     if (!is.null(errmsg)) {

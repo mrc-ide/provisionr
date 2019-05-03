@@ -1,3 +1,7 @@
+# provisionr 0.1.13
+
+* Shell quote all arguments before building packages
+
 # provisionr 0.1.12
 
 * Detect and use GITHUB_PAT for downloading private repositories
