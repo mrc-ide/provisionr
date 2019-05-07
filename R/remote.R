@@ -256,7 +256,7 @@ build_package <- function(path, vignettes = FALSE, manual = FALSE,
   }
   ## Don't use normalizePath here because that creates spaces in
   ## windows file names
-  path_abs <- path.expand(path, mustWork = TRUE)
+  path_abs <- abs_path(path)
 
   dat <- read.dcf(desc, c("Package", "Version"))
   dest_pkg <- sprintf("%s_%s.tar.gz", dat[, "Package"], dat[, "Version"])

@@ -81,3 +81,8 @@ clean_matrix <- function(m, cols) {
 which_max_version <- function(v) {
   which(v == max(v))
 }
+
+
+abs_path <- function(x) {
+  gsub("\\", "/", path.expand(x), fixed = TRUE)
+}
