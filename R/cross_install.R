@@ -73,8 +73,8 @@ cross_install_package <- function(package, path, lib, binary) {
     env <- c(R_LIBS_USER = paste(.libPaths(), collapse = .Platform$path.sep),
              CYGWIN = "nodosfilewarning")
     args <- c("CMD", "INSTALL", "--no-test-load",
-              paste0("--library=", shQuote(normalizePath(lib_tmp, "/"))),
-              shQuote(normalizePath(path)))
+              paste0("--library=", shQuote(path.expand(lib_tmp, "/"))),
+              shQuote(path.expand(path)))
     call_r(args, env = env)
     file.rename(file.path(lib_tmp, package), dest)
   }

@@ -254,7 +254,9 @@ build_package <- function(path, vignettes = FALSE, manual = FALSE,
   if (!file.exists(desc)) {
     stop("Did not find a valid package at ", path)
   }
-  path_abs <- normalizePath(path, mustWork = TRUE)
+  ## Don't use normalizePath here because that creates spaces in
+  ## windows file names
+  path_abs <- path.expand(path, mustWork = TRUE)
 
   dat <- read.dcf(desc, c("Package", "Version"))
   dest_pkg <- sprintf("%s_%s.tar.gz", dat[, "Package"], dat[, "Version"])
