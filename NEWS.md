@@ -1,3 +1,7 @@
+# provisionr 0.1.14
+
+* Fix parsing of R packages that contain many references to a minimum R version.
+
 # provisionr 0.1.13
 
 * Shell quote all arguments before building packages
