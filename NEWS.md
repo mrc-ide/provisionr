@@ -1,3 +1,7 @@
+# provisionr 0.1.13
+
+* Fix parsing of R packages that contain many references to a minimum R version.
+
 # provisionr 0.1.12
 
 * Detect and use GITHUB_PAT for downloading private repositories

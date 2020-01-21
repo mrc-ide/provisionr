@@ -39,7 +39,8 @@ filter_available_packages_r_version <- function(db, r_version) {
       if (any(i)) {
         if (sum(i) > 1L) {
           ## stopifnot(x[i, "operator"] %in% c(">", ">="))
-          i <- which(i)[which_max_version(numeric_version(x[i, "version"]))]
+          j <- which_max_version(numeric_version(x[i, "version"]))
+          i <- which(i)[j][[1]]
         }
         x[i, 2:3]
       } else {
