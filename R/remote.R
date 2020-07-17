@@ -91,8 +91,8 @@ drat_build <- function(specs, path, force, progress) {
     }
 
     ## Then comes a fairly ugly bit of collecting up all the extra bits:
-    extra <- lapply(desc, function(x)
-      if ("Remotes" %in% names(x)) parse_remotes(x[["Remotes"]]) else NULL)
+    ## extra <- lapply(desc, function(x)
+    ##   if ("Remotes" %in% names(x)) parse_remotes(x[["Remotes"]]) else NULL)
 
     specs <- unique(setdiff(unlist(extra, TRUE, FALSE), names(desc)))
   }
