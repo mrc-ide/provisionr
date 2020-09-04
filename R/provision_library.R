@@ -142,12 +142,12 @@ provision_library <- function(packages, lib,
     ## These are a bit special, and I don't manage to treat these
     ## correctly with the non-cross install, unless the version
     ## numbers are increased, and even then it may not work.
-    if (!is.null(src$local_drat)) {
-      special <- unname(
-        read.dcf(file.path(contrib_url(src$local_drat, "src", NULL),
-                           "PACKAGES"), "Package")[, "Package"])
-      plan <- plan_force_binary(special, plan, src$local_drat)
-    }
+    ## if (FALSE && !is.null(src$local_drat)) {
+    ##   special <- unname(
+    ##     read.dcf(file.path(contrib_url(src$local_drat, "src", NULL),
+    ##                        "PACKAGES"), "Package")[, "Package"])
+    ##   plan <- plan_force_binary(special, plan, src$local_drat)
+    ## }
 
     plan <- cross_install_packages(packages, lib, db, plan,
                                    allow_missing = allow_missing,

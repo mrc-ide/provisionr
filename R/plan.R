@@ -236,7 +236,7 @@ check_version <- function(packages, lib, db, local_drat) {
       for (p in intersect(names(dat_drat), packages[current])) {
         t_drat <- sub(";.*", "", dat_drat[[p]]$Packaged)
         t_lib <- sub(";.*", "", drop(read.dcf(desc[[p]], "Packaged")))
-        if (as.POSIXct(t_drat) > as.POSIXct(t_lib)) {
+        if (isTRUE(as.POSIXct(t_drat) > as.POSIXct(t_lib))) {
           provisionr_log("force",
                          sprintf("upgrade '%s' as detected newer source", p))
           current[packages == p] <- FALSE
